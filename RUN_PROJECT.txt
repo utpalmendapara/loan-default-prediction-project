@@ -1,0 +1,66 @@
+LOAN DEFAULT PREDICTION — HOW TO RUN
+=====================================
+
+Open TWO Command Prompt (cmd) windows.
+
+IMPORTANT: Start both commands from the main project folder:
+C:\Users\Aadit\Desktop\loan-default-prediction
+
+
+1. START THE BACKEND
+--------------------
+
+In the first Command Prompt window, type:
+
+cd C:\Users\Aadit\Desktop\loan-default-prediction
+python -m uvicorn backend.main:app --reload --port 8000
+
+What this does:
+- cd moves the Command Prompt to the project folder.
+- python runs your installed Python environment.
+- uvicorn starts the FastAPI backend server.
+- backend.main:app means: use the app in backend\main.py.
+- --reload restarts the backend automatically when you save a Python file.
+- --port 8000 runs the backend on port 8000.
+
+Backend links:
+- API:  http://localhost:8000
+- API documentation:  http://localhost:8000/docs
+
+
+2. START THE FRONTEND
+---------------------
+
+In the second Command Prompt window, type:
+
+cd C:\Users\Aadit\Desktop\loan-default-prediction\frontend
+npm run dev
+
+What this does:
+- cd moves into the React frontend folder.
+- npm run dev starts the Vite development server.
+
+Frontend link:
+- Website:  http://localhost:5173
+
+
+3. STOP A SERVER
+----------------
+
+Click the relevant Command Prompt window and press:
+
+Ctrl + C
+
+
+IF "npm" OR A PACKAGE IS MISSING
+---------------------------------
+
+Run this once inside the frontend folder:
+
+npm install
+
+Then run "npm run dev" again.
+
+If the backend says "No module named uvicorn", tell the project owner which
+Python environment was used previously. Do not use backend\venv automatically:
+the working project setup currently uses the normal "python" command above.
