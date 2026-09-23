@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Loan Risk Assessment Form | CrediPulse AI{% endblock %}
+
+{% block content %}
+<div class="form-page-container">
+  <div class="form-header">
+    <div class="badge badge-accent">SOP Week 7 & 8: Flask Form & Frontend</div>
+    <h2>Loan Applicant Risk Evaluation</h2>
+    <p class="text-muted">Enter borrower credit attributes or select a preset to evaluate default probability.</p>
+  </div>
+
+  <!-- Quick Preset Selector -->
+  <div class="preset-container">
+    <span class="preset-label"><strong>Quick Fill Test Profiles:</strong></span>
+    <button type="button" class="btn btn-preset btn-preset-low" onclick="fillPreset('low')">🟢 Low Risk Borrower</button>
+    <button type="button" class="btn btn-preset btn-preset-med" onclick="fillPreset('med')">🟡 Moderate Risk Borrower</button>
+    <button type="button" class="btn btn-preset btn-preset-high" onclick="fillPreset('high')">🔴 High Risk Borrower</button>
+  </div>
+
+  <form action="{{ url_for('predict') }}" method="POST" class="loan-form">
+    <!-- Section 1: Demographics -->
+    <fieldset class="form-section">
+      <legend class="section-legend">👤 1. Applicant Demographics</legend>
+      <div class="grid-form">
+        <div class="form-group">
+          <label for="Age">Age (Years)</label>
+          <input type="number" id="Age" name="Age" min="18" max="75" value="35" required class="form-control">
+          <small class="form-text">Borrower age between 18 and 75.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="Education">Education Level</label>
+          <select id="Education" name="Education" class="form-control">
+            <option value="High School">High School</option>
+            <option value="Bachelor's" selected>Bachelor's</option>
+            <option value="Master's">Master's</option>
+            <option value="PhD">PhD</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="MaritalStatus">Marital Status</label>
+          <select id="MaritalStatus" name="MaritalStatus" class="form-control">
+            <option value="Single">Single</option>
+            <option value="Married" selected>Married</option>
+            <option value="Divorced">Divorced</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="HasDependents">Has Dependents?</label>
+          <select id="HasDependents" name="HasDependents" class="form-control">
+            <option value="No" selected>No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Section 2: Employment & Income -->
+    <fieldset class="form-section">
+      <legend class="section-legend">💼 2. Employment & Financial Capacity</legend>
+      <div class="grid-form">
+        <div class="form-group">
+          <label for="EmploymentType">Employment Type</label>
+          <select id="EmploymentType" name="EmploymentType" class="form-control">
+            <option value="Full-time" selected>Full-time</option>
+            <option value="Part-time">Part-time</option>
+            <option value="Self-employed">Self-employed</option>
+            <option value="Unemployed">Unemployed</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="MonthsEmployed">Months Employed</label>
+          <input type="number" id="MonthsEmployed" name="MonthsEmployed" min="0" max="180" value="48" required class="form-control">
+          <small class="form-text">Tenure at current employer (months).</small>
+        </div>
+
+        <div class="form-group">
+          <label for="Income">Annual Gross Income ($)</label>
+          <input type="number" id="Income" name="Income" min="5000" max="250000" step="1000" value="75000" required class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="DTIRatio">Debt-to-Income (DTI) Ratio</label>
+          <input type="number" id="DTIRatio" name="DTIRatio" min="0.05" max="0.95" step="0.01" value="0.28" required class="form-control">
+          <small class="form-text">Total monthly debt divided by gross income (0.10 - 0.90).</small>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Section 3: Credit Profile -->
+    <fieldset class="form-section">
+      <legend class="section-legend">💳 3. Credit Profile</legend>
+      <div class="grid-form">
+        <div class="form-group">
+          <label for="CreditScore">Credit Score (FICO)</label>
+          <input type="number" id="CreditScore" name="CreditScore" min="300" max="850" value="720" required class="form-control">
+          <small class="form-text">300 (Poor) to 850 (Exceptional).</small>
+        </div>
+
+        <div class="form-group">
+          <label for="NumCreditLines">Open Credit Lines</label>
+          <input type="number" id="NumCreditLines" name="NumCreditLines" min="1" max="15" value="3" required class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="HasMortgage">Has Existing Mortgage?</label>
+          <select id="HasMortgage" name="HasMortgage" class="form-control">
+            <option value="Yes" selected>Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="HasCoSigner">Has Co-Signer?</label>
+          <select id="HasCoSigner" name="HasCoSigner" class="form-control">
+            <option value="Yes" selected>Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Section 4: Loan Details -->
+    <fieldset class="form-section">
+      <legend class="section-legend">📑 4. Requested Loan Terms</legend>
+      <div class="grid-form">
+        <div class="form-group">
+          <label for="LoanAmount">Loan Amount ($)</label>
+          <input type="number" id="LoanAmount" name="LoanAmount" min="1000" max="150000" step="500" value="25000" required class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="InterestRate">Interest Rate (%)</label>
+          <input type="number" id="InterestRate" name="InterestRate" min="2.0" max="35.0" step="0.1" value="7.5" required class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="LoanTerm">Loan Term (Months)</label>
+          <select id="LoanTerm" name="LoanTerm" class="form-control">
+            <option value="12">12 Months (1 Year)</option>
+            <option value="24">24 Months (2 Years)</option>
+            <option value="36" selected>36 Months (3 Years)</option>
+            <option value="48">48 Months (4 Years)</option>
+            <option value="60">60 Months (5 Years)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="LoanPurpose">Loan Purpose</label>
+          <select id="LoanPurpose" name="LoanPurpose" class="form-control">
+            <option value="Home" selected>Home Improvement / Purchase</option>
+            <option value="Auto">Auto Financing</option>
+            <option value="Business">Small Business</option>
+            <option value="Education">Education / Tuition</option>
+            <option value="Other">Other / Personal</option>
+          </select>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-large btn-submit">
+        ⚡ Evaluate Loan Default Risk
+      </button>
+      <button type="reset" class="btn btn-secondary btn-large">
+        Reset Fields
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

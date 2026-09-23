@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Model Performance & Metrics | CrediPulse AI{% endblock %}
+
+{% block content %}
+<div class="metrics-page-container">
+  <div class="metrics-header">
+    <div class="badge badge-accent">SOP Week 6: Visualization Suite</div>
+    <h2>Machine Learning Performance Dashboard</h2>
+    <p class="text-muted">Empirical validation graphs and comparison metrics generated across 255k loan applications.</p>
+  </div>
+
+  <!-- Leaderboard Table -->
+  <div class="table-container">
+    <table class="metrics-table">
+      <thead>
+        <tr>
+          <th>Algorithm Architecture</th>
+          <th>Test Accuracy</th>
+          <th>ROC-AUC</th>
+          <th>Precision (Default)</th>
+          <th>F1-Score</th>
+          <th>Implementation Mode</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="table-highlight">
+          <td><strong>Gradient Boosting Classifier</strong></td>
+          <td>88.64%</td>
+          <td>0.7356</td>
+          <td>59.80%</td>
+          <td>0.1183</td>
+          <td><span class="badge badge-success">Top Ensemble</span></td>
+        </tr>
+        <tr>
+          <td><strong>Random Forest Classifier</strong></td>
+          <td>88.42%</td>
+          <td>0.7320</td>
+          <td>100.00%</td>
+          <td>0.0064</td>
+          <td><span class="badge badge-info">Scikit-Learn</span></td>
+        </tr>
+        <tr>
+          <td><strong>Logistic Regression (L2)</strong></td>
+          <td>88.58%</td>
+          <td>0.7303</td>
+          <td>64.15%</td>
+          <td>0.0692</td>
+          <td><span class="badge badge-info">Scikit-Learn</span></td>
+        </tr>
+        <tr>
+          <td><strong>Gaussian Naive Bayes</strong></td>
+          <td>88.55%</td>
+          <td>0.7255</td>
+          <td>60.66%</td>
+          <td>0.0747</td>
+          <td><span class="badge badge-info">Scikit-Learn</span></td>
+        </tr>
+        <tr>
+          <td><strong>Decision Tree Classifier (Depth 7)</strong></td>
+          <td>88.02%</td>
+          <td>0.6923</td>
+          <td>37.39%</td>
+          <td>0.0824</td>
+          <td><span class="badge badge-info">Scikit-Learn</span></td>
+        </tr>
+        <tr>
+          <td><strong>Scratch Decision Tree (Pure NumPy)</strong></td>
+          <td>88.85%</td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td><span class="badge badge-warning">Custom (No Library)</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Visualizations Gallery -->
+  <div class="gallery-grid">
+    <div class="gallery-card">
+      <h3>1. Receiver Operating Characteristic (ROC)</h3>
+      <p class="text-muted">Gradient Boosting achieves peak separation with AUC = 0.736.</p>
+      <img src="{{ url_for('static', filename='visualizations/roc_curve_comparison.png') }}" alt="ROC Curve" class="viz-img">
+    </div>
+
+    <div class="gallery-card">
+      <h3>2. Precision-Recall Curves</h3>
+      <p class="text-muted">Evaluating true positive trade-offs under 11.6% class imbalance.</p>
+      <img src="{{ url_for('static', filename='visualizations/precision_recall_curves.png') }}" alt="PR Curve" class="viz-img">
+    </div>
+
+    <div class="gallery-card">
+      <h3>3. Confusion Matrix Heatmaps</h3>
+      <p class="text-muted">Decision Tree vs Random Forest classification breakdown.</p>
+      <img src="{{ url_for('static', filename='visualizations/confusion_matrix_heatmaps.png') }}" alt="Confusion Matrix" class="viz-img">
+    </div>
+
+    <div class="gallery-card">
+      <h3>4. Feature Importance Ranking</h3>
+      <p class="text-muted">Age, Income, and InterestRate dominate default predictive power.</p>
+      <img src="{{ url_for('static', filename='visualizations/feature_importance_ranking.png') }}" alt="Feature Importance" class="viz-img">
+    </div>
+
+    <div class="gallery-card">
+      <h3>5. Bias-Variance & Overfitting Curve</h3>
+      <p class="text-muted">Depth sweep identifies sweet spot at depth 7, preventing memorization.</p>
+      <img src="{{ url_for('static', filename='visualizations/overfitting_learning_curves.png') }}" alt="Learning Curve" class="viz-img">
+    </div>
+
+    <div class="gallery-card">
+      <h3>6. Model Calibration (Reliability)</h3>
+      <p class="text-muted">Reliability curves confirm well-calibrated posterior probabilities.</p>
+      <img src="{{ url_for('static', filename='visualizations/model_calibration_curves.png') }}" alt="Calibration Curve" class="viz-img">
+    </div>
+
+    <div class="gallery-card">
+      <h3>7. 5-Fold Stratified Cross-Validation</h3>
+      <p class="text-muted">Distribution of ROC-AUC scores across 5 random test folds.</p>
+      <img src="{{ url_for('static', filename='visualizations/cross_validation_boxplots.png') }}" alt="Cross Validation" class="viz-img">
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Risk Assessment Result | CrediPulse AI{% endblock %}
+
+{% block content %}
+<div class="result-page-container">
+  <div class="result-card card-{{ badge_class }}">
+    <div class="result-header">
+      <span class="status-badge badge-{{ badge_class }}">{{ risk_tier }}</span>
+      <h2>Underwriting Decision: {{ decision }}</h2>
+      <p class="text-muted">Assessed on {{ timestamp }} • Engine: Scikit-Learn Decision Tree (Depth 8)</p>
+    </div>
+
+    <!-- Probability Gauge Bar -->
+    <div class="gauge-section">
+      <div class="gauge-labels">
+        <span>Non-Default Probability: <strong>{{ non_default_prob }}%</strong></span>
+        <span>Default Risk Probability: <strong>{{ default_prob }}%</strong></span>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar progress-bar-{{ badge_class }}" style="width: {{ default_prob }}%;"></div>
+      </div>
+    </div>
+
+    <!-- Recommendation Box -->
+    <div class="recommendation-box alert-{{ badge_class }}">
+      <h4>📋 Underwriting Recommendation</h4>
+      <p>{{ recommendation }}</p>
+    </div>
+
+    <!-- Applicant Summary Table -->
+    <div class="summary-section">
+      <h3>Submitted Applicant Parameters</h3>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="item-label">Age / Education</span>
+          <span class="item-value">{{ form_data.Age }} yrs • {{ form_data.Education }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="item-label">Annual Income</span>
+          <span class="item-value">${{ "{:,}".format(form_data.Income|int) }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="item-label">Loan Amount</span>
+          <span class="item-value">${{ "{:,}".format(form_data.LoanAmount|int) }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="item-label">Credit Score</span>
+          <span class="item-value">{{ form_data.CreditScore }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="item-label">Interest Rate</span>
+          <span class="item-value">{{ form_data.InterestRate }}%</span>
+        </div>
+        <div class="summary-item">
+          <span class="item-label">DTI Ratio</span>
+          <span class="item-value">{{ form_data.DTIRatio }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="item-label">Employment Type</span>
+          <span class="item-value">{{ form_data.EmploymentType }} ({{ form_data.MonthsEmployed }} mos)</span>
+        </div>
+        <div class="summary-item">
+          <span class="item-label">Co-Signer / Mortgage</span>
+          <span class="item-value">Co-Signer: {{ form_data.HasCoSigner }} • Mortgage: {{ form_data.HasMortgage }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-actions">
+      <a href="{{ url_for('predict') }}" class="btn btn-primary btn-large">&larr; Evaluate Another Application</a>
+      <a href="{{ url_for('metrics') }}" class="btn btn-secondary btn-large">View SOP Performance Charts</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Loan Default Prediction | Overview{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+  <div class="hero-badge">Computer Engineering ML Project SOP (Weeks 1 - 10)</div>
+  <h1 class="hero-title">Automated Loan Default <span class="gradient-text">Risk Prediction</span></h1>
+  <p class="hero-subtitle">
+    Production-ready machine learning underwriting engine trained on 255,000+ real-world loan applications.
+    Evaluates credit risk in milliseconds with tree-based algorithms and custom pure NumPy models.
+  </p>
+  
+  <div class="hero-actions">
+    <a href="{{ url_for('predict') }}" class="btn btn-primary btn-large">Launch Risk Evaluator &rarr;</a>
+    <a href="{{ url_for('metrics') }}" class="btn btn-secondary btn-large">View Week 6 Charts</a>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-number">255k+</div>
+      <div class="stat-label">Loan Applications</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">88.6%</div>
+      <div class="stat-label">Test Set Accuracy</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">0.736</div>
+      <div class="stat-label">Ensemble ROC-AUC</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">&lt; 15ms</div>
+      <div class="stat-label">Real-time Inference</div>
+    </div>
+  </div>
+</section>
+
+<section class="features-section">
+  <h2 class="section-title">End-to-End SOP Architecture</h2>
+  <p class="section-subtitle">Structured in accordance with the 10-week departmental milestone roadmap</p>
+
+  <div class="cards-grid">
+    <div class="feature-card">
+      <div class="card-icon">📊</div>
+      <h3>Weeks 1 & 2: EDA & Preprocessing</h3>
+      <p>Outlier treatment via IQR, missing value verification, categorical dummy encoding, and feature scaling comparisons.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-icon">🧠</div>
+      <h3>Week 3: Library & From-Scratch</h3>
+      <p>Trained Scikit-Learn Decision Trees alongside a pure Python + NumPy Decision Tree implemented without ML libraries.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-icon">⚖️</div>
+      <h3>Weeks 4 & 5: Diagnostics & Ensembles</h3>
+      <p>Bias-variance tradeoff sweeps, 5-Fold Stratified Cross-Validation, Random Forest, and Gradient Boosting tuning.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-icon">📈</div>
+      <h3>Week 6: Visualization Suite</h3>
+      <p>High-resolution ROC curves, Precision-Recall curves, confusion matrices, and feature importance rankings.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-icon">⚡</div>
+      <h3>Weeks 7 & 8: Flask & UI Form</h3>
+      <p>Modern Flask application with interactive 16-parameter input form, presets, and real-time risk gauges.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-icon">🚀</div>
+      <h3>Weeks 9 & 10: Backend & Evaluation</h3>
+      <p>REST API endpoints, Docker containerization, cloud deployment configs, and comprehensive project evaluation report.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}
