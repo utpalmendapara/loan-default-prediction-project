@@ -141,15 +141,18 @@ def predict_loan_default(input_data: LoanPredictionInput) -> PredictionResponse:
         )
 
 
-# Root route for quick verification in browser
-@app.get("/", tags=["System"])
-def root():
-    return {
-        "message": "Welcome to the Loan Default Prediction API",
-        "docs": "/docs",
-        "models_endpoint": "/api/models",
-        "predict_endpoint": "/api/predict"
-    }
+# ==============================================================================
+# 4. Mount Flask Web UI Application (SOP Weeks 7 & 8)
+# ==============================================================================
+# This allows Vercel / Cloud deployments to serve both the FastAPI API endpoints
+# (/docs, /api/predict) and the full interactive Flask UI (/, /predict, /metrics).
+try:
+    from starlette.middleware.wsgi import WSGIMiddleware
+    from flask_app.app import app as flask_app
+    app.mount("/", WSGIMiddleware(flask_app))
+    print("[INFO] Successfully mounted Flask Web UI onto FastAPI.")
+except Exception as e:
+    print(f"[WARNING] Could not mount Flask Web UI: {e}")
 
 
 # ==============================================================================
