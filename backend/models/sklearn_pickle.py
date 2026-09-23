@@ -30,9 +30,11 @@ class SklearnPicklePredictor(DecisionTreePredictor):
         self.accuracy_score = accuracy_score
         project_root = Path(__file__).resolve().parent.parent.parent
         self.pkl_path = project_root / "notebooks-containing-models" / filename
-        self.load_model()
+        self.model = None
 
     def load_model(self) -> None:
+        if self.model is not None:
+            return
         if not self.pkl_path.exists():
             raise FileNotFoundError(f"Model file not found at: {self.pkl_path}")
         print(f"[INFO] Loading {self.name} from {self.pkl_path}...")
