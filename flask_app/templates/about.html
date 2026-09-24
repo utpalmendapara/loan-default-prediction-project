@@ -1,74 +1,74 @@
 {% extends "base.html" %}
 
-{% block title %}About SOP Project | CrediPulse AI{% endblock %}
+{% block title %}Architecture & Methodology | CrediPulse AI{% endblock %}
 
 {% block content %}
 <div class="about-container">
   <div class="about-header">
-    <div class="badge badge-accent">Academic Standard Operating Procedure</div>
-    <h2>Computer Engineering Department ML Project</h2>
-    <p class="text-muted">A systematic 10-week machine learning project implementation for Loan Default Prediction.</p>
+    <div class="badge badge-accent">System Architecture & ML Lifecycle</div>
+    <h2>Credit Risk Underwriting Engineering Pipeline</h2>
+    <p class="text-muted">A systematic, production-grade machine learning implementation for Loan Default Prediction.</p>
   </div>
 
   <div class="roadmap-grid">
     <div class="roadmap-item">
-      <div class="step-num">Week 1</div>
+      <div class="step-num">Phase 01</div>
       <h3>Problem Definition & Exploration</h3>
       <p>Problem formulation, business context, ingestion of 255,347 loan applications, data dictionary, class imbalance analysis (~88.4% non-default, ~11.6% default).</p>
     </div>
 
     <div class="roadmap-item">
-      <div class="step-num">Week 2</div>
+      <div class="step-num">Phase 02</div>
       <h3>Data Cleaning & Preprocessing</h3>
       <p>Zero missing values verified, IQR/Z-score outlier detection and winsorization, binary label encoding, one-hot dummy encoding, and StandardScaler normalizations.</p>
     </div>
 
     <div class="roadmap-item">
-      <div class="step-num">Week 3</div>
+      <div class="step-num">Phase 03</div>
       <h3>Model Creation (Library & Scratch)</h3>
-      <p>Justification of tree-based models on tabular financial data. Scikit-learn Decision Tree baseline + <strong>custom pure Python/NumPy Decision Tree built without ML libraries</strong>.</p>
+      <p>Justification of tree-based models on tabular financial data. Scikit-learn Decision Tree baseline + <strong>custom pure Python/NumPy Decision Tree built from first principles</strong>.</p>
     </div>
 
     <div class="roadmap-item">
-      <div class="step-num">Week 4</div>
-      <h3>Model Evaluation & Overfitting Check</h3>
+      <div class="step-num">Phase 04</div>
+      <h3>Model Evaluation & Diagnostics</h3>
       <p>Precision, Recall, F1, ROC-AUC, Specificity, Confusion Matrix analysis. Tree depth sweep diagnosing high bias (underfitting) vs high variance (overfitting).</p>
     </div>
 
     <div class="roadmap-item">
-      <div class="step-num">Week 5</div>
+      <div class="step-num">Phase 05</div>
       <h3>Advanced Models & Hyperparameter Tuning</h3>
       <p>Random Forest, Gradient Boosting, 5-Fold Stratified Cross-Validation, GridSearchCV tuning of hyperparameters (n_estimators, max_depth, min_samples_split).</p>
     </div>
 
     <div class="roadmap-item">
-      <div class="step-num">Week 6</div>
+      <div class="step-num">Phase 06</div>
       <h3>Visualization of Metrics</h3>
       <p>Display of 7 distinct evaluation graph types: ROC curves, PR curves, Confusion Matrix heatmaps, Feature Importances, Learning curves, Calibration, and CV boxplots.</p>
     </div>
 
     <div class="roadmap-item">
-      <div class="step-num">Week 7</div>
-      <h3>Flask Project Setup</h3>
-      <p>Production Flask modular application setup with configuration management, routes, and web forms.</p>
+      <div class="step-num">Phase 07</div>
+      <h3>Application Backend Architecture</h3>
+      <p>Modular application architecture with dynamic configuration management, routes, and robust form validation.</p>
     </div>
 
     <div class="roadmap-item">
-      <div class="step-num">Week 8</div>
-      <h3>Frontend User Interface</h3>
+      <div class="step-num">Phase 08</div>
+      <h3>Frontend User Experience</h3>
       <p>Glassmorphic, responsive user interface with 16 input parameters, quick preset profiles (Low/Med/High risk), and visual risk gauge rendering.</p>
     </div>
 
     <div class="roadmap-item">
-      <div class="step-num">Week 9</div>
-      <h3>Backend & Free Hosting Deployment</h3>
-      <p>REST API endpoints, Docker containerization, Procfile, Render deployment blueprint (render.yaml), and deployment guide.</p>
+      <div class="step-num">Phase 09</div>
+      <h3>Backend APIs & Containerization</h3>
+      <p>REST API endpoints, Docker containerization, production configs, and scalable cloud deployment blueprints.</p>
     </div>
 
     <div class="roadmap-item">
-      <div class="step-num">Week 10</div>
-      <h3>Final Project Evaluation</h3>
-      <p>Comprehensive project evaluation notebook and report: financial cost matrix, decision threshold tuning, error analysis, and production roadmap.</p>
+      <div class="step-num">Phase 10</div>
+      <h3>Financial Impact & Optimization</h3>
+      <p>Comprehensive model assessment: financial cost matrix, decision threshold tuning, error analysis, and production roadmap.</p>
     </div>
   </div>
 </div>

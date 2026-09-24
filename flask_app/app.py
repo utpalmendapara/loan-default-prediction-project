@@ -2,8 +2,8 @@
 flask_app/app.py
 ================
 Flask Application for Loan Default Risk Assessment.
-Satisfies SOP Week 7 (Flask Project Setup & Form Handling),
-Week 8 (Frontend Web Form), and Week 9 (Backend Processing & API).
+Provides real-time scoring interface, visual analytics dashboard,
+and production-ready REST API endpoints.
 """
 
 import os
@@ -116,7 +116,7 @@ def index():
 def predict():
     """
     Form Handling Route:
-    - GET: Render loan application form (Week 7 & 8)
+    - GET: Render loan application risk evaluation form
     - POST: Process applicant data and display risk result
     """
     if request.method == "POST":
@@ -177,7 +177,7 @@ def predict():
 
 @app.route("/api/predict", methods=["POST"])
 def api_predict():
-    """REST API endpoint for programmatic inference (Week 9)."""
+    """REST API endpoint for programmatic real-time inference."""
     try:
         data = request.get_json(force=True)
         df_input = preprocess_form_data(data)
@@ -203,12 +203,12 @@ def api_predict():
 
 @app.route("/metrics")
 def metrics():
-    """Display Week 6 generated performance charts and model leaderboard."""
+    """Display model performance charts and algorithm leaderboard."""
     return render_template("metrics.html")
 
 @app.route("/about")
 def about():
-    """Display project SOP details, team, and architecture."""
+    """Display engineering pipeline architecture and methodology."""
     return render_template("about.html")
 
 if __name__ == "__main__":

@@ -43,3 +43,12 @@ frontend/dist/
 Thumbs.db
 .vscode/
 .idea/
+
+# ── Large model files (exceed GitHub 100 MB limit) ────────────────────────────
+# KNN (~47 MB) and SVC (~11 MB) are too large for GitHub / Streamlit Cloud
+# DecisionTreeModel.pkl, LogisticRegressionModel.pkl, GaussianNBModel.pkl are KEPT
+notebooks-containing-models/KNNModel.pkl
+notebooks-containing-models/SVCModel.pkl
+
+# ── Large data files ──────────────────────────────────────────────────────────
+data/Loan_default.csv
