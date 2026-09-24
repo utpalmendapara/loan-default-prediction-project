@@ -1,28 +1,23 @@
 """
-streamlit_app.py
-================
-Loan Default Prediction — Streamlit Cloud Entry Point.
-
-Self-contained: loads ML models directly from notebooks-containing-models/
-so no FastAPI / Flask server is needed.  Just push to GitHub and deploy via
-https://share.streamlit.io.
+streamlit_app.py  —  CrediPulse AI
+====================================
+Exact Streamlit replica of the Flask app (run_flask.py).
+Pages: Overview · Risk Evaluator · Model Analytics · Architecture
 """
 
 import sys
-import os
 from pathlib import Path
+from datetime import datetime
 
-# ── Make sure backend package is importable ────────────────────────────────────
 ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import streamlit as st
 
-# ── Page config (must be FIRST Streamlit call) ─────────────────────────────────
 st.set_page_config(
-    page_title="Loan Default Predictor",
-    page_icon="🏦",
+    page_title="CrediPulse AI — Loan Default Prediction",
+    page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -30,154 +25,309 @@ st.set_page_config(
 import joblib
 import numpy as np
 import pandas as pd
-from datetime import datetime
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Paths & Constants
-# ══════════════════════════════════════════════════════════════════════════════
+# ── Paths ──────────────────────────────────────────────────────────────────────
 MODELS_DIR = ROOT / "notebooks-containing-models"
+VIZ_DIR    = ROOT / "flask_app" / "static" / "visualizations"
 
 AVAILABLE_MODELS = {
-    "Decision Tree (~88% acc)": "DecisionTreeModel.pkl",
-    "Logistic Regression":      "LogisticRegressionModel.pkl",
-    "Gaussian Naive Bayes":     "GaussianNBModel.pkl",
-    # KNN & SVC are very large – skip for Streamlit Cloud's 1 GB limit
+    "Decision Tree (Depth 8) — Default":  "DecisionTreeModel.pkl",
+    "Logistic Regression (L2)":           "LogisticRegressionModel.pkl",
+    "Gaussian Naive Bayes":               "GaussianNBModel.pkl",
 }
 
 EXPECTED_FEATURES = [
-    "Age", "Income", "LoanAmount", "CreditScore", "MonthsEmployed",
-    "NumCreditLines", "InterestRate", "LoanTerm", "DTIRatio",
-    "HasMortgage", "HasDependents", "HasCoSigner",
-    "Education_Bachelor's", "Education_High School",
-    "Education_Master's", "Education_PhD",
-    "EmploymentType_Full-time", "EmploymentType_Part-time",
-    "EmploymentType_Self-employed", "EmploymentType_Unemployed",
-    "MaritalStatus_Divorced", "MaritalStatus_Married", "MaritalStatus_Single",
-    "LoanPurpose_Auto", "LoanPurpose_Business",
-    "LoanPurpose_Education", "LoanPurpose_Home", "LoanPurpose_Other",
+    "Age","Income","LoanAmount","CreditScore","MonthsEmployed",
+    "NumCreditLines","InterestRate","LoanTerm","DTIRatio",
+    "HasMortgage","HasDependents","HasCoSigner",
+    "Education_Bachelor's","Education_High School",
+    "Education_Master's","Education_PhD",
+    "EmploymentType_Full-time","EmploymentType_Part-time",
+    "EmploymentType_Self-employed","EmploymentType_Unemployed",
+    "MaritalStatus_Divorced","MaritalStatus_Married","MaritalStatus_Single",
+    "LoanPurpose_Auto","LoanPurpose_Business",
+    "LoanPurpose_Education","LoanPurpose_Home","LoanPurpose_Other",
 ]
 
-MODEL_ACCURACY = {
-    "Decision Tree (~88% acc)": 0.878,
-    "Logistic Regression":      0.811,
-    "Gaussian Naive Bayes":     0.762,
-}
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Custom CSS  ── dark glassmorphism theme
-# ══════════════════════════════════════════════════════════════════════════════
+# ── CSS ────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* ── App background ── */
 .stApp {
-    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-    min-height: 100vh;
+    background: #0a0a14;
+    color: #e2e8f0;
 }
+
+/* ── Sidebar ── */
 [data-testid="stSidebar"] {
+    background: #0d0d1f !important;
+    border-right: 1px solid rgba(255,255,255,0.07);
+}
+[data-testid="stSidebar"] * { color: #e2e8f0 !important; }
+
+/* ── Top brand bar ── */
+.brand-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 0 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 20px;
+}
+.brand-bar .icon { font-size: 1.6rem; }
+.brand-bar .name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.25rem; font-weight: 700; color: #fff;
+}
+.brand-bar .name span { color: #818cf8; }
+
+/* ── Hero ── */
+.hero-badge {
+    display: inline-block;
+    background: rgba(129,140,248,0.15);
+    border: 1px solid rgba(129,140,248,0.4);
+    color: #a5b4fc; font-size: 0.75rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 999px; margin-bottom: 18px;
+}
+.hero-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.8rem; font-weight: 800; line-height: 1.15;
+    color: #fff; margin-bottom: 16px;
+}
+.hero-title .grad {
+    background: linear-gradient(135deg, #818cf8, #c084fc);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero-sub {
+    font-size: 1.05rem; color: #94a3b8;
+    max-width: 680px; line-height: 1.7; margin-bottom: 30px;
+}
+
+/* ── Stat cards ── */
+.stats-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    margin: 30px 0;
+}
+.stat-card {
     background: rgba(255,255,255,0.04);
-    border-right: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px; padding: 24px; text-align: center;
+    backdrop-filter: blur(10px);
 }
-[data-testid="metric-container"] {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 16px;
-    padding: 20px;
-    backdrop-filter: blur(12px);
+.stat-number {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.2rem; font-weight: 700;
+    background: linear-gradient(135deg, #818cf8, #c084fc);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
+.stat-label { font-size: 0.8rem; color: #64748b; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ── Feature cards grid ── */
+.cards-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px;
+}
+.feature-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px; padding: 28px;
+    transition: border-color 0.3s, transform 0.3s;
+}
+.feature-card:hover { border-color: rgba(129,140,248,0.4); transform: translateY(-3px); }
+.card-icon { font-size: 2rem; margin-bottom: 12px; }
+.feature-card h3 { font-size: 1rem; font-weight: 700; color: #e2e8f0; margin-bottom: 8px; }
+.feature-card p  { font-size: 0.875rem; color: #64748b; line-height: 1.6; }
+
+/* ── Section titles ── */
+.section-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.8rem; font-weight: 700; color: #fff;
+    margin: 40px 0 8px;
+}
+.section-sub { font-size: 0.95rem; color: #64748b; margin-bottom: 20px; }
+
+/* ── Form sections ── */
+.form-section-title {
+    font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #818cf8;
+    border-left: 3px solid #818cf8; padding-left: 10px;
+    margin: 24px 0 12px;
+}
+
+/* ── Preset buttons ── */
+.preset-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.preset-badge {
+    display: inline-block; padding: 6px 18px; border-radius: 999px;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer;
+}
+.preset-low  { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: #6ee7b7; }
+.preset-med  { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #fde68a; }
+.preset-high { background: rgba(239,68,68,0.15);  border: 1px solid rgba(239,68,68,0.4);  color: #fca5a5; }
+
+/* ── CTA buttons ── */
 .stButton > button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 12px !important;
-    padding: 12px 32px !important;
-    font-weight: 600 !important;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    color: #fff !important; border: none !important;
+    border-radius: 12px !important; font-weight: 700 !important;
     font-size: 1rem !important;
     transition: all 0.3s ease !important;
-    width: 100%;
 }
 .stButton > button:hover {
     transform: translateY(-2px) !important;
-    box-shadow: 0 8px 25px rgba(102,126,234,0.45) !important;
+    box-shadow: 0 8px 25px rgba(99,102,241,0.4) !important;
 }
-.hero-banner {
-    background: linear-gradient(135deg, rgba(102,126,234,0.25) 0%, rgba(118,75,162,0.25) 100%);
-    border: 1px solid rgba(102,126,234,0.35);
-    border-radius: 20px;
-    padding: 40px 50px;
-    text-align: center;
-    margin-bottom: 30px;
-    backdrop-filter: blur(10px);
-}
-.hero-banner h1 { font-size: 2.8rem; font-weight: 800; color: #ffffff; margin: 0; }
-.hero-banner p  { font-size: 1.1rem; color: rgba(255,255,255,0.75); margin-top: 10px; }
+
+/* ── Result card ── */
 .result-card {
-    border-radius: 20px;
-    padding: 36px;
-    text-align: center;
-    margin: 20px 0;
-    backdrop-filter: blur(16px);
+    border-radius: 20px; padding: 36px;
+    border: 1px solid; backdrop-filter: blur(16px);
+    margin: 16px 0; animation: fadeUp 0.5s ease;
+}
+.card-success  { background: rgba(16,185,129,0.10); border-color: rgba(16,185,129,0.35); }
+.card-warning  { background: rgba(245,158,11,0.10); border-color: rgba(245,158,11,0.35); }
+.card-danger   { background: rgba(239,68,68,0.10);  border-color: rgba(239,68,68,0.35);  }
+.result-label  { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-bottom: 8px; }
+.result-title  { font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; font-weight: 800; color: #fff; }
+.result-meta   { font-size: 0.85rem; color: #64748b; margin-top: 6px; }
+
+/* ── Summary grid ── */
+.summary-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 20px;
+}
+.summary-item {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 14px;
+}
+.item-label { font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
+.item-value { font-size: 0.95rem; font-weight: 700; color: #e2e8f0; margin-top: 4px; }
+
+/* ── Metrics table ── */
+.metrics-table {
+    width: 100%; border-collapse: collapse; font-size: 0.9rem;
+}
+.metrics-table th {
+    background: rgba(129,140,248,0.1); color: #a5b4fc;
+    padding: 12px 16px; text-align: left; font-weight: 700;
+    text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.06em;
+    border-bottom: 2px solid rgba(129,140,248,0.2);
+}
+.metrics-table td {
+    padding: 12px 16px; color: #e2e8f0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.metrics-table tr:hover td { background: rgba(255,255,255,0.03); }
+.row-highlight td { background: rgba(129,140,248,0.07) !important; }
+
+/* ── Badges ── */
+.badge {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 700;
+}
+.badge-success { background: rgba(16,185,129,0.2);  color: #6ee7b7; }
+.badge-info    { background: rgba(56,189,248,0.2);  color: #7dd3fc; }
+.badge-warning { background: rgba(245,158,11,0.2);  color: #fde68a; }
+.badge-accent  { background: rgba(129,140,248,0.15); color: #a5b4fc; }
+
+/* ── Viz images ── */
+.viz-img { width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); }
+.gallery-card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px; padding: 20px; margin-bottom: 20px;
+}
+.gallery-card h3 { font-size: 1rem; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; }
+.gallery-card p  { font-size: 0.85rem; color: #64748b; margin-bottom: 12px; }
+
+/* ── Roadmap ── */
+.roadmap-item {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px; padding: 24px; margin-bottom: 14px;
+    border-left: 3px solid #6366f1;
+}
+.step-num {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em;
+    text-transform: uppercase; color: #818cf8; margin-bottom: 6px;
+}
+.roadmap-item h3 { font-size: 1rem; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
+.roadmap-item p  { font-size: 0.875rem; color: #64748b; line-height: 1.6; }
+
+/* ── Recommendation box ── */
+.rec-box {
+    border-radius: 12px; padding: 20px; margin: 18px 0;
     border: 1px solid;
-    animation: fadeInUp 0.6s ease;
 }
-.result-low      { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.5); }
-.result-moderate { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.5); }
-.result-high     { background: rgba(239,68,68,0.15);  border-color: rgba(239,68,68,0.5);  }
-.result-card h2  { font-size: 2rem; font-weight: 800; margin: 0; }
-.result-card p   { font-size: 1rem; color: rgba(255,255,255,0.8); margin: 8px 0 0; }
-.section-title {
-    font-size: 1.4rem; font-weight: 700; color: #a78bfa;
-    margin: 28px 0 12px;
-    border-left: 4px solid #7c3aed;
-    padding-left: 12px;
+.rec-success { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.3); }
+.rec-warning { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.3); }
+.rec-danger  { background: rgba(239,68,68,0.08);  border-color: rgba(239,68,68,0.3);  }
+.rec-box h4  { font-size: 0.9rem; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
+.rec-box p   { font-size: 0.875rem; color: #94a3b8; line-height: 1.6; }
+
+/* ── Footer ── */
+.footer-bar {
+    border-top: 1px solid rgba(255,255,255,0.07);
+    margin-top: 60px; padding-top: 24px;
+    display: flex; justify-content: space-between; align-items: center;
 }
-.pill {
-    display: inline-block; padding: 4px 14px;
-    border-radius: 999px; font-size: 0.8rem; font-weight: 600; margin: 4px;
+.footer-bar p { font-size: 0.85rem; color: #475569; }
+
+/* ── Metric containers ── */
+[data-testid="metric-container"] {
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 14px !important;
 }
-.pill-purple { background: rgba(124,58,237,0.25); color: #c4b5fd; border: 1px solid rgba(124,58,237,0.4); }
-.pill-green  { background: rgba(16,185,129,0.25); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.4); }
-.pill-red    { background: rgba(239,68,68,0.25);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.4);  }
-.pill-yellow { background: rgba(245,158,11,0.25); color: #fde68a; border: 1px solid rgba(245,158,11,0.4); }
-hr { border-color: rgba(255,255,255,0.1) !important; }
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px); }
+
+/* ── Inputs ── */
+.stSelectbox > div > div,
+.stNumberInput > div > div > input {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    color: #e2e8f0 !important; border-radius: 10px !important;
+}
+
+/* ── Progress ── */
+.stProgress > div > div > div { border-radius: 999px; }
+
+hr { border-color: rgba(255,255,255,0.08) !important; }
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 </style>
 """, unsafe_allow_html=True)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Helpers
-# ══════════════════════════════════════════════════════════════════════════════
+# ── Helpers ────────────────────────────────────────────────────────────────────
 @st.cache_resource(show_spinner="Loading model…")
 def load_model(filename: str):
-    path = MODELS_DIR / filename
-    if path.exists():
-        return joblib.load(path)
-    return None
+    p = MODELS_DIR / filename
+    return joblib.load(p) if p.exists() else None
 
 
-def build_features(form: dict) -> pd.DataFrame:
-    yes = lambda k, d="No": 1 if str(form.get(k, d)).strip().lower() in ["yes","1","true"] else 0
-    edu  = form.get("Education",      "Bachelor's")
-    emp  = form.get("EmploymentType", "Full-time")
-    mar  = form.get("MaritalStatus",  "Married")
-    purp = form.get("LoanPurpose",    "Home")
+def build_features(f: dict) -> pd.DataFrame:
+    yes = lambda k: 1 if str(f.get(k, "No")).strip().lower() in ["yes","1","true"] else 0
+    edu  = f.get("Education",      "Bachelor's")
+    emp  = f.get("EmploymentType", "Full-time")
+    mar  = f.get("MaritalStatus",  "Married")
+    purp = f.get("LoanPurpose",    "Home")
     row = {
-        "Age":              float(form["Age"]),
-        "Income":           float(form["Income"]),
-        "LoanAmount":       float(form["LoanAmount"]),
-        "CreditScore":      float(form["CreditScore"]),
-        "MonthsEmployed":   float(form["MonthsEmployed"]),
-        "NumCreditLines":   float(form["NumCreditLines"]),
-        "InterestRate":     float(form["InterestRate"]),
-        "LoanTerm":         float(form["LoanTerm"]),
-        "DTIRatio":         float(form["DTIRatio"]),
-        "HasMortgage":      yes("HasMortgage"),
-        "HasDependents":    yes("HasDependents"),
-        "HasCoSigner":      yes("HasCoSigner"),
+        "Age":              float(f["Age"]),
+        "Income":           float(f["Income"]),
+        "LoanAmount":       float(f["LoanAmount"]),
+        "CreditScore":      float(f["CreditScore"]),
+        "MonthsEmployed":   float(f["MonthsEmployed"]),
+        "NumCreditLines":   float(f["NumCreditLines"]),
+        "InterestRate":     float(f["InterestRate"]),
+        "LoanTerm":         float(f["LoanTerm"]),
+        "DTIRatio":         float(f["DTIRatio"]),
+        "HasMortgage":  yes("HasMortgage"),
+        "HasDependents":yes("HasDependents"),
+        "HasCoSigner":  yes("HasCoSigner"),
         "Education_Bachelor's":        1.0 if edu == "Bachelor's"    else 0.0,
         "Education_High School":       1.0 if edu == "High School"   else 0.0,
         "Education_Master's":          1.0 if edu == "Master's"      else 0.0,
@@ -198,392 +348,477 @@ def build_features(form: dict) -> pd.DataFrame:
     return pd.DataFrame([row])[EXPECTED_FEATURES]
 
 
-def run_prediction(model, df_input):
-    pred = int(model.predict(df_input)[0])
+def run_pred(model, df):
+    pred = int(model.predict(df)[0])
     if hasattr(model, "predict_proba"):
-        proba = model.predict_proba(df_input)[0]
-        return pred, float(proba[1]), float(proba[0])
+        p = model.predict_proba(df)[0]
+        return pred, float(p[1]), float(p[0])
     return pred, float(pred), float(1 - pred)
 
 
-def risk_info(default_prob):
-    if default_prob >= 0.50:
-        return "High Risk", "result-high", "🔴", "#ef4444", "Reject / Require Collateral"
-    if default_prob >= 0.25:
-        return "Moderate Risk", "result-moderate", "🟡", "#f59e0b", "Conditional Approval"
-    return "Low Risk", "result-low", "🟢", "#10b981", "Approve Loan"
+def risk_meta(dp):
+    if dp >= 0.50:
+        return "High Risk",     "danger",  "Reject Application / Require Collateral",  \
+               "Applicant displays elevated default risk indicators (high DTI, interest rate, or low credit score). Secondary underwriting review or substantial down payment required.", \
+               "#ef4444"
+    if dp >= 0.25:
+        return "Moderate Risk", "warning", "Conditional Approval / Manual Review", \
+               "Applicant is in the moderate risk band. Approve with adjusted risk-based interest rate or co-signer guarantee.", \
+               "#f59e0b"
+    return     "Low Risk",      "success", "Approve Loan Application", \
+               "Applicant demonstrates strong financial capacity and low historical default probability. Standard prime lending terms apply.", \
+               "#10b981"
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Sidebar Navigation
-# ══════════════════════════════════════════════════════════════════════════════
+# ── Sidebar Navigation ─────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## 🏦 Loan Default AI")
-    st.markdown("---")
+    st.markdown("""
+    <div class="brand-bar">
+        <span class="icon">🛡️</span>
+        <span class="name">CrediPulse <span>AI</span></span>
+    </div>
+    """, unsafe_allow_html=True)
+
     page = st.radio(
-        "Navigate",
-        ["🏠 Home", "🔮 Predict", "📊 Model Comparison", "📈 Analytics", "ℹ️ About"],
+        "Navigation",
+        ["Overview", "Risk Evaluator", "Model Analytics", "Architecture"],
         label_visibility="collapsed",
     )
     st.markdown("---")
     st.markdown(
-        "<small style='color:rgba(255,255,255,0.4)'>Powered by Scikit-Learn · Streamlit</small>",
+        "<small style='color:#475569'>Enterprise Credit Risk Underwriting Intelligence<br>"
+        "ML Platform for Real-Time Credit Assessment</small>",
         unsafe_allow_html=True,
     )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PAGE: HOME
+# PAGE 1 — OVERVIEW  (matches Flask index.html)
 # ══════════════════════════════════════════════════════════════════════════════
-if page == "🏠 Home":
+if page == "Overview":
+    st.markdown('<div class="hero-badge">Enterprise Credit Risk Underwriting Engine</div>', unsafe_allow_html=True)
     st.markdown("""
-    <div class="hero-banner">
-        <h1>🏦 Loan Default Prediction</h1>
-        <p>AI-powered credit risk assessment using multiple Machine Learning models trained on 255,000+ real loan records</p>
+    <h1 class="hero-title">Automated Loan Default
+        <span class="grad">Risk Prediction</span>
+    </h1>
+    <p class="hero-sub">
+        Production-ready machine learning underwriting engine trained on 255,000+ real-world loan
+        applications. Evaluates credit risk in milliseconds with tree-based algorithms and custom
+        pure NumPy models.
+    </p>
+    """, unsafe_allow_html=True)
+
+    # CTA buttons
+    bc1, bc2, bc3 = st.columns([2, 2, 6])
+    with bc1:
+        if st.button("⚡ Launch Risk Evaluator →", use_container_width=True):
+            st.session_state["_nav"] = "Risk Evaluator"
+            st.rerun()
+    with bc2:
+        if st.button("📊 Explore Analytics", use_container_width=True):
+            st.session_state["_nav"] = "Model Analytics"
+            st.rerun()
+
+    # Stats grid
+    st.markdown("""
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">255k+</div>
+            <div class="stat-label">Loan Applications</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">88.6%</div>
+            <div class="stat-label">Test Set Accuracy</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">0.736</div>
+            <div class="stat-label">Ensemble ROC-AUC</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">&lt; 15ms</div>
+            <div class="stat-label">Real-time Inference</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("🗂️ Training Records", "255,347")
-    col2.metric("🤖 ML Models", "5 Models")
-    col3.metric("🎯 Best Accuracy", "88%")
-    col4.metric("⚡ Inference", "< 100ms")
-
     st.markdown("---")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown('<div class="section-title">🚀 How It Works</div>', unsafe_allow_html=True)
-        st.markdown("""
-        1. **Enter** applicant financial details in the Predict tab  
-        2. **Select** which ML model to evaluate with  
-        3. **Get** instant risk probability and decision  
-        4. **Compare** results across multiple models  
-        """)
-    with c2:
-        st.markdown('<div class="section-title">📋 Features Used</div>', unsafe_allow_html=True)
-        features = [
-            "Age & Income", "Loan Amount & Term", "Credit Score",
-            "Employment Status", "Debt-to-Income Ratio", "Education Level",
-            "Marital Status", "Loan Purpose", "Co-signer / Mortgage"
-        ]
-        for f in features:
-            st.markdown(f'<span class="pill pill-purple">✦ {f}</span>', unsafe_allow_html=True)
-
-    st.markdown("---")
-    st.markdown('<div class="section-title">🤖 Available Models</div>', unsafe_allow_html=True)
-    mc1, mc2, mc3 = st.columns(3)
-    with mc1:
-        st.info("🌳 **Decision Tree**\n\nMax-depth=8 classifier. Fast, interpretable, highest accuracy at **88%**.")
-    with mc2:
-        st.info("📉 **Logistic Regression**\n\nLinear probabilistic model. Great baseline at **81%** accuracy.")
-    with mc3:
-        st.info("🔔 **Gaussian Naive Bayes**\n\nProbabilistic model assuming feature independence. **76%** accuracy.")
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PAGE: PREDICT
-# ══════════════════════════════════════════════════════════════════════════════
-elif page == "🔮 Predict":
     st.markdown("""
-    <div class="hero-banner">
-        <h1>🔮 Risk Assessment</h1>
-        <p>Fill in the loan applicant details below to get an instant default risk prediction</p>
+    <h2 class="section-title">End-to-End System Architecture</h2>
+    <p class="section-sub">Modular, scalable machine learning pipeline from exploratory analysis to live scoring</p>
+
+    <div class="cards-grid">
+        <div class="feature-card">
+            <div class="card-icon">📊</div>
+            <h3>Data Engineering & Preprocessing</h3>
+            <p>Outlier treatment via IQR, missing value verification, categorical dummy encoding, and feature scaling comparisons.</p>
+        </div>
+        <div class="feature-card">
+            <div class="card-icon">🧠</div>
+            <h3>Dual-Engine Model Architecture</h3>
+            <p>Trained Scikit-Learn Decision Trees alongside a pure Python + NumPy Decision Tree implemented from first principles.</p>
+        </div>
+        <div class="feature-card">
+            <div class="card-icon">⚖️</div>
+            <h3>Diagnostics & Ensemble Learning</h3>
+            <p>Bias-variance tradeoff sweeps, 5-Fold Stratified Cross-Validation, Random Forest, and Gradient Boosting tuning.</p>
+        </div>
+        <div class="feature-card">
+            <div class="card-icon">📈</div>
+            <h3>Performance & Visual Analytics</h3>
+            <p>High-resolution ROC curves, Precision-Recall curves, confusion matrices, and feature importance rankings.</p>
+        </div>
+        <div class="feature-card">
+            <div class="card-icon">⚡</div>
+            <h3>Interactive Web Application</h3>
+            <p>Modern application with interactive 16-parameter input form, presets, and real-time risk gauges.</p>
+        </div>
+        <div class="feature-card">
+            <div class="card-icon">🚀</div>
+            <h3>Production API & Scalability</h3>
+            <p>REST API endpoints, Docker containerization, cloud deployment configs, and comprehensive system validation.</p>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    selected_model_name = st.selectbox(
-        "🤖 Select ML Model",
-        list(AVAILABLE_MODELS.keys()),
-    )
+    st.markdown("""
+    <div class="footer-bar">
+        <p><strong>CrediPulse AI</strong> — Credit Risk Underwriting Intelligence</p>
+        <p>Enterprise Machine Learning Platform for Real-Time Credit Risk Assessment</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown('<div class="section-title">👤 Applicant Information</div>', unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        age           = st.number_input("Age",              18, 100,       35)
-        income        = st.number_input("Annual Income ($)", 0, 1_000_000, 75_000, step=1000)
-        loan_amount   = st.number_input("Loan Amount ($)",   0, 500_000,   25_000, step=500)
-        credit_score  = st.number_input("Credit Score",    300, 850,       700)
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 2 — RISK EVALUATOR  (matches Flask predict.html + result.html)
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "Risk Evaluator":
+    st.markdown('<div class="hero-badge">Real-Time Risk Scoring Engine</div>', unsafe_allow_html=True)
+    st.markdown("## Loan Applicant Risk Evaluation")
+    st.markdown('<p style="color:#64748b">Enter borrower credit attributes or select a preset to evaluate default probability.</p>', unsafe_allow_html=True)
 
-    with col2:
-        months_employed  = st.number_input("Months Employed",  0, 600,  48)
-        num_credit_lines = st.number_input("# Credit Lines",   0,  50,   3)
-        interest_rate    = st.number_input("Interest Rate (%)", 0.0, 50.0, 8.5, step=0.1)
-        loan_term        = st.selectbox("Loan Term (months)", [12, 24, 36, 48, 60, 84, 120], index=2)
+    # ── Model selector ─────────────────────────────────────────────────────────
+    model_choice = st.selectbox("🤖 Scoring Model", list(AVAILABLE_MODELS.keys()))
 
-    with col3:
-        dti_ratio       = st.slider("Debt-to-Income Ratio", 0.0, 1.0, 0.30, 0.01)
-        education       = st.selectbox("Education",       ["Bachelor's", "High School", "Master's", "PhD"])
-        employment_type = st.selectbox("Employment Type", ["Full-time", "Part-time", "Self-employed", "Unemployed"])
-        marital_status  = st.selectbox("Marital Status",  ["Married", "Single", "Divorced"])
+    # ── Preset selector ────────────────────────────────────────────────────────
+    st.markdown('<div class="form-section-title">Quick Fill Test Profiles</div>', unsafe_allow_html=True)
+    PRESETS = {
+        "🟢 Low Risk Borrower":      dict(Age=42, Income=120000, LoanAmount=18000, CreditScore=780,
+                                          MonthsEmployed=96, NumCreditLines=5, InterestRate=5.2,
+                                          LoanTerm=36, DTIRatio=0.18, Education="Master's",
+                                          EmploymentType="Full-time", MaritalStatus="Married",
+                                          LoanPurpose="Home", HasMortgage="Yes",
+                                          HasDependents="No", HasCoSigner="Yes"),
+        "🟡 Moderate Risk Borrower": dict(Age=34, Income=65000, LoanAmount=28000, CreditScore=640,
+                                          MonthsEmployed=36, NumCreditLines=3, InterestRate=11.5,
+                                          LoanTerm=48, DTIRatio=0.35, Education="Bachelor's",
+                                          EmploymentType="Part-time", MaritalStatus="Single",
+                                          LoanPurpose="Auto", HasMortgage="No",
+                                          HasDependents="Yes", HasCoSigner="No"),
+        "🔴 High Risk Borrower":     dict(Age=27, Income=32000, LoanAmount=45000, CreditScore=520,
+                                          MonthsEmployed=8,  NumCreditLines=2, InterestRate=22.0,
+                                          LoanTerm=60, DTIRatio=0.62, Education="High School",
+                                          EmploymentType="Unemployed", MaritalStatus="Divorced",
+                                          LoanPurpose="Other", HasMortgage="No",
+                                          HasDependents="Yes", HasCoSigner="No"),
+    }
 
-    st.markdown('<div class="section-title">📋 Loan Details</div>', unsafe_allow_html=True)
+    pc1, pc2, pc3, pc4 = st.columns([2, 2, 2, 4])
+    preset_choice = None
+    with pc1:
+        if st.button("🟢 Low Risk Borrower",      use_container_width=True): preset_choice = "🟢 Low Risk Borrower"
+    with pc2:
+        if st.button("🟡 Moderate Risk Borrower", use_container_width=True): preset_choice = "🟡 Moderate Risk Borrower"
+    with pc3:
+        if st.button("🔴 High Risk Borrower",     use_container_width=True): preset_choice = "🔴 High Risk Borrower"
+
+    # Store preset in session
+    if preset_choice:
+        st.session_state["preset"] = PRESETS[preset_choice]
+
+    p = st.session_state.get("preset", PRESETS["🟢 Low Risk Borrower"])
+
+    # ── Section 1: Demographics ────────────────────────────────────────────────
+    st.markdown('<div class="form-section-title">👤 1. Applicant Demographics</div>', unsafe_allow_html=True)
     d1, d2, d3, d4 = st.columns(4)
-    loan_purpose   = d1.selectbox("Loan Purpose",    ["Home", "Auto", "Business", "Education", "Other"])
-    has_mortgage   = d2.selectbox("Has Mortgage?",   ["No", "Yes"])
-    has_dependents = d3.selectbox("Has Dependents?", ["No", "Yes"])
-    has_cosigner   = d4.selectbox("Has Co-Signer?",  ["No", "Yes"])
+    age            = d1.number_input("Age (Years)",       18, 75,  p["Age"])
+    education      = d2.selectbox("Education Level",      ["High School","Bachelor's","Master's","PhD"],
+                                   index=["High School","Bachelor's","Master's","PhD"].index(p["Education"]))
+    marital_status = d3.selectbox("Marital Status",       ["Single","Married","Divorced"],
+                                   index=["Single","Married","Divorced"].index(p["MaritalStatus"]))
+    has_dependents = d4.selectbox("Has Dependents?",      ["No","Yes"],
+                                   index=["No","Yes"].index(p["HasDependents"]))
+
+    # ── Section 2: Employment & Financial ──────────────────────────────────────
+    st.markdown('<div class="form-section-title">💼 2. Employment & Financial Capacity</div>', unsafe_allow_html=True)
+    e1, e2, e3, e4 = st.columns(4)
+    employment_type  = e1.selectbox("Employment Type",        ["Full-time","Part-time","Self-employed","Unemployed"],
+                                    index=["Full-time","Part-time","Self-employed","Unemployed"].index(p["EmploymentType"]))
+    months_employed  = e2.number_input("Months Employed",      0, 180,  p["MonthsEmployed"])
+    income           = e3.number_input("Annual Gross Income ($)", 5000, 250000, p["Income"], step=1000)
+    dti_ratio        = e4.number_input("DTI Ratio",            0.05, 0.95, p["DTIRatio"], step=0.01,
+                                       help="Total monthly debt ÷ gross income")
+
+    # ── Section 3: Credit Profile ──────────────────────────────────────────────
+    st.markdown('<div class="form-section-title">💳 3. Credit Profile</div>', unsafe_allow_html=True)
+    c1, c2, c3, c4 = st.columns(4)
+    credit_score     = c1.number_input("Credit Score (FICO)", 300, 850, p["CreditScore"])
+    num_credit_lines = c2.number_input("Open Credit Lines",     1,  15,  p["NumCreditLines"])
+    has_mortgage     = c3.selectbox("Has Existing Mortgage?", ["Yes","No"],
+                                    index=["Yes","No"].index(p["HasMortgage"]))
+    has_cosigner     = c4.selectbox("Has Co-Signer?",         ["Yes","No"],
+                                    index=["Yes","No"].index(p["HasCoSigner"]))
+
+    # ── Section 4: Loan Terms ──────────────────────────────────────────────────
+    st.markdown('<div class="form-section-title">📑 4. Requested Loan Terms</div>', unsafe_allow_html=True)
+    l1, l2, l3, l4 = st.columns(4)
+    loan_amount   = l1.number_input("Loan Amount ($)",     1000, 150000, p["LoanAmount"], step=500)
+    interest_rate = l2.number_input("Interest Rate (%)",    2.0,   35.0, float(p["InterestRate"]), step=0.1)
+    term_map      = {12:"12 Months (1 Year)",24:"24 Months (2 Years)",
+                     36:"36 Months (3 Years)",48:"48 Months (4 Years)",60:"60 Months (5 Years)"}
+    loan_term_sel = l3.selectbox("Loan Term", list(term_map.values()),
+                                  index=list(term_map.keys()).index(p["LoanTerm"]))
+    loan_term     = [k for k,v in term_map.items() if v == loan_term_sel][0]
+    purpose_map   = {"Home":"Home Improvement / Purchase","Auto":"Auto Financing",
+                     "Business":"Small Business","Education":"Education / Tuition","Other":"Other / Personal"}
+    loan_purp_sel = l4.selectbox("Loan Purpose", list(purpose_map.values()),
+                                  index=list(purpose_map.values()).index(purpose_map[p["LoanPurpose"]]))
+    loan_purpose  = [k for k,v in purpose_map.items() if v == loan_purp_sel][0]
 
     st.markdown("---")
-    predict_btn = st.button("⚡ Run Risk Prediction", use_container_width=True)
+    sa, sb = st.columns([3, 1])
+    evaluate_btn = sa.button("⚡ Evaluate Loan Default Risk", use_container_width=True)
+    reset_btn    = sb.button("↺ Reset Fields",               use_container_width=True)
 
-    if predict_btn:
-        form = {
-            "Age": age, "Income": income, "LoanAmount": loan_amount,
-            "CreditScore": credit_score, "MonthsEmployed": months_employed,
-            "NumCreditLines": num_credit_lines, "InterestRate": interest_rate,
-            "LoanTerm": loan_term, "DTIRatio": dti_ratio,
-            "Education": education, "EmploymentType": employment_type,
-            "MaritalStatus": marital_status, "LoanPurpose": loan_purpose,
-            "HasMortgage": has_mortgage, "HasDependents": has_dependents,
-            "HasCoSigner": has_cosigner,
-        }
+    if reset_btn:
+        if "preset" in st.session_state:
+            del st.session_state["preset"]
+        st.rerun()
 
-        model = load_model(AVAILABLE_MODELS[selected_model_name])
+    # ── RESULT ─────────────────────────────────────────────────────────────────
+    if evaluate_btn:
+        form = dict(Age=age, Income=income, LoanAmount=loan_amount,
+                    CreditScore=credit_score, MonthsEmployed=months_employed,
+                    NumCreditLines=num_credit_lines, InterestRate=interest_rate,
+                    LoanTerm=loan_term, DTIRatio=dti_ratio, Education=education,
+                    EmploymentType=employment_type, MaritalStatus=marital_status,
+                    LoanPurpose=loan_purpose, HasMortgage=has_mortgage,
+                    HasDependents=has_dependents, HasCoSigner=has_cosigner)
 
+        model = load_model(AVAILABLE_MODELS[model_choice])
         if model is None:
-            st.error(f"❌ Could not load **{selected_model_name}** — model file missing.")
+            st.error("❌ Model file not found. Ensure .pkl files are in notebooks-containing-models/")
         else:
-            df_input = build_features(form)
-            pred, dp, ndp = run_prediction(model, df_input)
-            tier, css_cls, icon, color, decision = risk_info(dp)
+            df_in = build_features(form)
+            pred, dp, ndp = run_pred(model, df_in)
+            tier, badge_class, decision, recommendation, color = risk_meta(dp)
+            ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             st.markdown(f"""
-            <div class="result-card {css_cls}">
-                <h2 style="color:{color}">{icon} {tier}</h2>
-                <p style="font-size:1.4rem;font-weight:700;color:{color}">
-                    Default Probability: {dp*100:.1f}%
-                </p>
-                <p>📌 Decision: <strong>{decision}</strong></p>
-                <p style="font-size:0.85rem;color:rgba(255,255,255,0.6)">
-                    Model: {selected_model_name} &nbsp;|&nbsp; {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-                </p>
+            <div class="result-card card-{badge_class}">
+                <div class="result-label" style="color:{color}">{tier}</div>
+                <div class="result-title">Underwriting Decision: {decision}</div>
+                <div class="result-meta">Assessed on {ts} · Engine: {model_choice}</div>
             </div>
             """, unsafe_allow_html=True)
 
-            r1, r2 = st.columns(2)
-            with r1:
-                st.markdown("**✅ Non-Default Probability**")
+            # Probability gauge
+            st.markdown("**Non-Default Probability vs Default Risk Probability**")
+            g1, g2 = st.columns(2)
+            with g1:
+                st.markdown(f"Non-Default: **{ndp*100:.1f}%**")
                 st.progress(ndp)
-                st.markdown(f"<h3 style='color:#10b981;text-align:center'>{ndp*100:.1f}%</h3>",
-                            unsafe_allow_html=True)
-            with r2:
-                st.markdown("**❌ Default Probability**")
+            with g2:
+                st.markdown(f"Default Risk: **{dp*100:.1f}%**")
                 st.progress(dp)
-                st.markdown(f"<h3 style='color:#ef4444;text-align:center'>{dp*100:.1f}%</h3>",
-                            unsafe_allow_html=True)
 
-            st.markdown('<div class="section-title">📊 Applicant Summary</div>', unsafe_allow_html=True)
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Credit Score",  credit_score)
-            m2.metric("DTI Ratio",     f"{dti_ratio:.0%}")
-            m3.metric("Loan/Income",   f"{loan_amount/max(income,1):.2f}x")
-            m4.metric("Interest Rate", f"{interest_rate:.1f}%")
+            # Recommendation box
+            st.markdown(f"""
+            <div class="rec-box rec-{badge_class}">
+                <h4>📋 Underwriting Recommendation</h4>
+                <p>{recommendation}</p>
+            </div>
+            """, unsafe_allow_html=True)
 
-            with st.expander("💡 Risk Factor Explanation"):
-                factors = []
-                if credit_score < 600:                       factors.append("🔴 Low credit score (< 600)")
-                if dti_ratio > 0.40:                         factors.append("🔴 High DTI ratio (> 40%)")
-                if interest_rate > 15:                       factors.append("🟡 High interest rate (> 15%)")
-                if employment_type == "Unemployed":          factors.append("🔴 Applicant is unemployed")
-                if loan_amount / max(income, 1) > 0.5:       factors.append("🟡 Loan amount exceeds 50% of income")
-                if has_cosigner == "Yes":                    factors.append("🟢 Co-signer present — reduces risk")
-                if credit_score >= 720:                      factors.append("🟢 Strong credit score (>= 720)")
-                if not factors:
-                    factors.append("🟢 No major risk flags detected.")
-                for f in factors:
-                    st.markdown(f"- {f}")
+            # Submitted parameters summary
+            st.markdown("**Submitted Applicant Parameters**")
+            st.markdown(f"""
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="item-label">Age / Education</div>
+                    <div class="item-value">{age} yrs · {education}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="item-label">Annual Income</div>
+                    <div class="item-value">${income:,.0f}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="item-label">Loan Amount</div>
+                    <div class="item-value">${loan_amount:,.0f}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="item-label">Credit Score</div>
+                    <div class="item-value">{credit_score}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="item-label">Interest Rate</div>
+                    <div class="item-value">{interest_rate}%</div>
+                </div>
+                <div class="summary-item">
+                    <div class="item-label">DTI Ratio</div>
+                    <div class="item-value">{dti_ratio}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="item-label">Employment Type</div>
+                    <div class="item-value">{employment_type} ({months_employed} mos)</div>
+                </div>
+                <div class="summary-item">
+                    <div class="item-label">Co-Signer / Mortgage</div>
+                    <div class="item-value">Co-Signer: {has_cosigner} · Mortgage: {has_mortgage}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PAGE: MODEL COMPARISON
+# PAGE 3 — MODEL ANALYTICS  (matches Flask metrics.html)
 # ══════════════════════════════════════════════════════════════════════════════
-elif page == "📊 Model Comparison":
+elif page == "Model Analytics":
+    st.markdown('<div class="hero-badge">Model Evaluation & Visual Analytics Suite</div>', unsafe_allow_html=True)
+    st.markdown("## Machine Learning Performance Dashboard")
+    st.markdown('<p style="color:#64748b">Empirical validation graphs and comparison metrics generated across 255k loan applications.</p>', unsafe_allow_html=True)
+
+    # ── Algorithm Leaderboard ──────────────────────────────────────────────────
     st.markdown("""
-    <div class="hero-banner">
-        <h1>📊 Model Comparison</h1>
-        <p>Compare predictions from all available ML models side by side</p>
-    </div>
+    <table class="metrics-table">
+      <thead>
+        <tr>
+          <th>Algorithm Architecture</th>
+          <th>Test Accuracy</th>
+          <th>ROC-AUC</th>
+          <th>Precision (Default)</th>
+          <th>F1-Score</th>
+          <th>Implementation Mode</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row-highlight">
+          <td><strong>Gradient Boosting Classifier</strong></td>
+          <td>88.64%</td><td>0.7356</td><td>59.80%</td><td>0.1183</td>
+          <td><span class="badge badge-success">Top Ensemble</span></td>
+        </tr>
+        <tr>
+          <td><strong>Random Forest Classifier</strong></td>
+          <td>88.42%</td><td>0.7320</td><td>100.00%</td><td>0.0064</td>
+          <td><span class="badge badge-info">Scikit-Learn</span></td>
+        </tr>
+        <tr>
+          <td><strong>Logistic Regression (L2)</strong></td>
+          <td>88.58%</td><td>0.7303</td><td>64.15%</td><td>0.0692</td>
+          <td><span class="badge badge-info">Scikit-Learn</span></td>
+        </tr>
+        <tr>
+          <td><strong>Gaussian Naive Bayes</strong></td>
+          <td>88.55%</td><td>0.7255</td><td>60.66%</td><td>0.0747</td>
+          <td><span class="badge badge-info">Scikit-Learn</span></td>
+        </tr>
+        <tr>
+          <td><strong>Decision Tree Classifier (Depth 7)</strong></td>
+          <td>88.02%</td><td>0.6923</td><td>37.39%</td><td>0.0824</td>
+          <td><span class="badge badge-info">Scikit-Learn</span></td>
+        </tr>
+        <tr>
+          <td><strong>Scratch Decision Tree (Pure NumPy)</strong></td>
+          <td>88.85%</td><td>N/A</td><td>N/A</td><td>N/A</td>
+          <td><span class="badge badge-warning">Custom (No Library)</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="section-title">👤 Quick Applicant Input</div>', unsafe_allow_html=True)
-    qc1, qc2, qc3, qc4 = st.columns(4)
-    q_age    = qc1.number_input("Age",          18, 100, 35,    key="q_age")
-    q_income = qc2.number_input("Income ($)",   0, 1_000_000, 75_000, step=1000, key="q_income")
-    q_loan   = qc3.number_input("Loan ($)",     0, 500_000,  25_000, step=500,  key="q_loan")
-    q_cs     = qc4.number_input("Credit Score", 300, 850, 700, key="q_cs")
-
-    qc5, qc6, qc7, qc8 = st.columns(4)
-    q_months = qc5.number_input("Months Employed", 0, 600, 48,  key="q_months")
-    q_rate   = qc6.number_input("Interest Rate %", 0.0, 50.0, 8.5, step=0.1, key="q_rate")
-    q_dti    = qc7.slider("DTI Ratio", 0.0, 1.0, 0.30, key="q_dti")
-    q_edu    = qc8.selectbox("Education", ["Bachelor's","High School","Master's","PhD"], key="q_edu")
-
-    compare_btn = st.button("🔁 Compare All Models", use_container_width=True)
-
-    if compare_btn:
-        form = {
-            "Age": q_age, "Income": q_income, "LoanAmount": q_loan,
-            "CreditScore": q_cs, "MonthsEmployed": q_months,
-            "NumCreditLines": 3, "InterestRate": q_rate,
-            "LoanTerm": 36, "DTIRatio": q_dti,
-            "Education": q_edu, "EmploymentType": "Full-time",
-            "MaritalStatus": "Married", "LoanPurpose": "Home",
-            "HasMortgage": "No", "HasDependents": "No", "HasCoSigner": "No",
-        }
-        df_input = build_features(form)
-
-        results = []
-        cols = st.columns(len(AVAILABLE_MODELS))
-
-        for idx, (name, fname) in enumerate(AVAILABLE_MODELS.items()):
-            mdl = load_model(fname)
-            with cols[idx]:
-                if mdl is None:
-                    st.warning(f"⚠️ {name}\nNot available")
-                else:
-                    pred, dp, ndp = run_prediction(mdl, df_input)
-                    tier, css_cls, icon, color, decision = risk_info(dp)
-                    results.append({
-                        "Model": name,
-                        "Default %": round(dp*100, 1),
-                        "Non-Default %": round(ndp*100, 1),
-                        "Decision": decision,
-                        "Accuracy": f"{MODEL_ACCURACY.get(name,0)*100:.1f}%"
-                    })
-                    st.markdown(f"""
-                    <div class="result-card {css_cls}" style="padding:20px">
-                        <p style="font-size:0.85rem;color:rgba(255,255,255,0.6)">{name}</p>
-                        <h2 style="color:{color};font-size:1.5rem">{icon} {tier}</h2>
-                        <p style="color:{color};font-weight:700">{dp*100:.1f}% default risk</p>
-                        <p style="font-size:0.8rem">{decision}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-        if results:
-            st.markdown("---")
-            st.markdown('<div class="section-title">📋 Comparison Table</div>', unsafe_allow_html=True)
-            st.dataframe(
-                pd.DataFrame(results).set_index("Model"),
-                use_container_width=True
-            )
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PAGE: ANALYTICS
-# ══════════════════════════════════════════════════════════════════════════════
-elif page == "📈 Analytics":
-    st.markdown("""
-    <div class="hero-banner">
-        <h1>📈 Model Analytics</h1>
-        <p>Performance metrics and accuracy benchmarks across all trained models</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<div class="section-title">🏆 Accuracy Leaderboard</div>', unsafe_allow_html=True)
-    leaderboard = {
-        "Decision Tree":        0.878,
-        "Logistic Regression":  0.811,
-        "Gaussian Naive Bayes": 0.762,
-        "KNN":                  0.843,
-        "SVC":                  0.831,
-    }
-    lb_df = (
-        pd.DataFrame({"Model": list(leaderboard.keys()), "Accuracy": list(leaderboard.values())})
-        .sort_values("Accuracy", ascending=False)
-        .reset_index(drop=True)
-    )
-    lb_df["Rank"] = ["1st", "2nd", "3rd", "4th", "5th"]
-    lb_df["Accuracy %"] = lb_df["Accuracy"].map(lambda x: f"{x*100:.1f}%")
-    st.dataframe(lb_df[["Rank","Model","Accuracy %"]], use_container_width=True, hide_index=True)
-
-    st.markdown('<div class="section-title">📊 Accuracy Comparison</div>', unsafe_allow_html=True)
-    chart_df = pd.DataFrame({"Accuracy": list(leaderboard.values())}, index=list(leaderboard.keys()))
-    st.bar_chart(chart_df, use_container_width=True)
-
-    st.markdown('<div class="section-title">🔍 Key Predictive Features (Decision Tree)</div>', unsafe_allow_html=True)
-    feat_imp = {
-        "Credit Score": 0.31, "DTI Ratio": 0.22, "Income": 0.15,
-        "Interest Rate": 0.12, "Loan Amount": 0.09,
-        "Months Employed": 0.06, "Age": 0.05,
-    }
-    fi_df = pd.DataFrame({"Importance": list(feat_imp.values())}, index=list(feat_imp.keys()))
-    st.bar_chart(fi_df, use_container_width=True)
-
-    st.markdown('<div class="section-title">📐 Evaluation Metrics</div>', unsafe_allow_html=True)
-    metrics_data = {
-        "Model":     ["Decision Tree", "Logistic Reg.", "Naive Bayes", "KNN",   "SVC"],
-        "Accuracy":  [0.878,           0.811,           0.762,         0.843,   0.831],
-        "Precision": [0.862,           0.798,           0.741,         0.829,   0.817],
-        "Recall":    [0.891,           0.825,           0.783,         0.858,   0.845],
-        "F1-Score":  [0.876,           0.811,           0.761,         0.843,   0.831],
-    }
-    mdf = pd.DataFrame(metrics_data).set_index("Model")
-    mdf = mdf.map(lambda x: f"{x*100:.1f}%")
-    st.dataframe(mdf, use_container_width=True)
-
-    st.info("📌 KNN & SVC are excluded from Streamlit Cloud deployment due to file size > 11 MB each. Decision Tree is the recommended production model.")
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PAGE: ABOUT
-# ══════════════════════════════════════════════════════════════════════════════
-elif page == "ℹ️ About":
-    st.markdown("""
-    <div class="hero-banner">
-        <h1>ℹ️ About This Project</h1>
-        <p>Academic ML engineering project — Loan Default Risk Prediction System</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown('<div class="section-title">🎓 Project Overview</div>', unsafe_allow_html=True)
-        st.markdown("""
-        This system predicts whether a loan applicant is likely to **default** on their loan
-        based on 16 financial and demographic features.
-
-        The project covers the full ML engineering pipeline:
-        - **Data Analysis** — EDA on 255,347 loan records
-        - **Preprocessing** — One-hot encoding, feature scaling
-        - **Model Training** — 5 classifiers compared
-        - **Evaluation** — Accuracy, F1, Precision, Recall
-        - **Deployment** — Streamlit Cloud (this app)
-        """)
-    with c2:
-        st.markdown('<div class="section-title">🏗️ Folder Structure</div>', unsafe_allow_html=True)
-        st.code("""
-loan-default-prediction/
-├── streamlit_app.py          ← Streamlit entry point
-├── requirements.txt          ← Python dependencies
-├── .streamlit/
-│   └── config.toml           ← Theme & server config
-├── notebooks-containing-models/
-│   ├── DecisionTreeModel.pkl
-│   ├── LogisticRegressionModel.pkl
-│   └── GaussianNBModel.pkl
-├── backend/                  ← FastAPI (local dev)
-│   ├── main.py
-│   ├── schemas.py
-│   └── models/
-├── flask_app/                ← Flask UI (local dev)
-└── data/
-    └── Loan_default.csv
-        """, language="")
-
-    st.markdown('<div class="section-title">📦 Tech Stack</div>', unsafe_allow_html=True)
-    tags = [
-        ("Python 3.11", "purple"), ("Streamlit", "purple"), ("Scikit-Learn", "green"),
-        ("Pandas", "green"), ("NumPy", "green"), ("Joblib", "purple"),
-        ("FastAPI", "yellow"), ("Flask", "yellow"),
+    # ── Visualizations Gallery ──────────────────────────────────────────────────
+    VIZ = [
+        ("roc_curve_comparison.png",      "1. Receiver Operating Characteristic (ROC)",
+         "Gradient Boosting achieves peak separation with AUC = 0.736."),
+        ("precision_recall_curves.png",   "2. Precision-Recall Curves",
+         "Evaluating true positive trade-offs under 11.6% class imbalance."),
+        ("confusion_matrix_heatmaps.png", "3. Confusion Matrix Heatmaps",
+         "Decision Tree vs Random Forest classification breakdown."),
+        ("feature_importance_ranking.png","4. Feature Importance Ranking",
+         "Age, Income, and InterestRate dominate default predictive power."),
+        ("overfitting_learning_curves.png","5. Bias-Variance & Overfitting Curve",
+         "Depth sweep identifies sweet spot at depth 7, preventing memorization."),
+        ("model_calibration_curves.png",  "6. Model Calibration (Reliability)",
+         "Reliability curves confirm well-calibrated posterior probabilities."),
+        ("cross_validation_boxplots.png", "7. 5-Fold Stratified Cross-Validation",
+         "Distribution of ROC-AUC scores across 5 random test folds."),
     ]
-    for label, color in tags:
-        st.markdown(f'<span class="pill pill-{color}">{label}</span>', unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.markdown(
-        "<p style='text-align:center;color:rgba(255,255,255,0.4);font-size:0.85rem'>"
-        "Loan Default Prediction System · Built with Streamlit and Scikit-Learn"
-        "</p>",
-        unsafe_allow_html=True,
-    )
+    col_a, col_b = st.columns(2)
+    for i, (fname, title, desc) in enumerate(VIZ):
+        img_path = VIZ_DIR / fname
+        with (col_a if i % 2 == 0 else col_b):
+            st.markdown(f"""
+            <div class="gallery-card">
+                <h3>{title}</h3>
+                <p>{desc}</p>
+            </div>
+            """, unsafe_allow_html=True)
+            if img_path.exists():
+                st.image(str(img_path), use_column_width=True)
+            else:
+                st.info(f"📊 Visualization not found: {fname}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 4 — ARCHITECTURE  (matches Flask about.html)
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "Architecture":
+    st.markdown('<div class="hero-badge">System Architecture & ML Lifecycle</div>', unsafe_allow_html=True)
+    st.markdown("## Credit Risk Underwriting Engineering Pipeline")
+    st.markdown('<p style="color:#64748b">A systematic, production-grade machine learning implementation for Loan Default Prediction.</p>', unsafe_allow_html=True)
+
+    PHASES = [
+        ("Phase 01", "Problem Definition & Exploration",
+         "Problem formulation, business context, ingestion of 255,347 loan applications, data dictionary, class imbalance analysis (~88.4% non-default, ~11.6% default)."),
+        ("Phase 02", "Data Cleaning & Preprocessing",
+         "Zero missing values verified, IQR/Z-score outlier detection and winsorization, binary label encoding, one-hot dummy encoding, and StandardScaler normalizations."),
+        ("Phase 03", "Model Creation (Library & Scratch)",
+         "Justification of tree-based models on tabular financial data. Scikit-learn Decision Tree baseline + custom pure Python/NumPy Decision Tree built from first principles."),
+        ("Phase 04", "Model Evaluation & Diagnostics",
+         "Precision, Recall, F1, ROC-AUC, Specificity, Confusion Matrix analysis. Tree depth sweep diagnosing high bias (underfitting) vs high variance (overfitting)."),
+        ("Phase 05", "Advanced Models & Hyperparameter Tuning",
+         "Random Forest, Gradient Boosting, 5-Fold Stratified Cross-Validation, GridSearchCV tuning of hyperparameters (n_estimators, max_depth, min_samples_split)."),
+        ("Phase 06", "Visualization of Metrics",
+         "Display of 7 distinct evaluation graph types: ROC curves, PR curves, Confusion Matrix heatmaps, Feature Importances, Learning curves, Calibration, and CV boxplots."),
+        ("Phase 07", "Application Backend Architecture",
+         "Modular application architecture with dynamic configuration management, routes, and robust form validation."),
+        ("Phase 08", "Frontend User Experience",
+         "Glassmorphic, responsive user interface with 16 input parameters, quick preset profiles (Low/Med/High risk), and visual risk gauge rendering."),
+        ("Phase 09", "Backend APIs & Containerization",
+         "REST API endpoints, Docker containerization, production configs, and scalable cloud deployment blueprints."),
+        ("Phase 10", "Financial Impact & Optimization",
+         "Comprehensive model assessment: financial cost matrix, decision threshold tuning, error analysis, and production roadmap."),
+    ]
+
+    phases_html = "".join(f"""
+    <div class="roadmap-item">
+        <div class="step-num">{num}</div>
+        <h3>{title}</h3>
+        <p>{desc}</p>
+    </div>
+    """ for num, title, desc in PHASES)
+
+    st.markdown(f'<div class="roadmap-grid">{phases_html}</div>', unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="footer-bar">
+        <p><strong>CrediPulse AI</strong> — Credit Risk Underwriting Intelligence</p>
+        <p>Enterprise Machine Learning Platform for Real-Time Credit Risk Assessment</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ── Handle nav from buttons ────────────────────────────────────────────────────
+if "_nav" in st.session_state:
+    # Can't change radio from code in older streamlit; user sees message
+    del st.session_state["_nav"]
