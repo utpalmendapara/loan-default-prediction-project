@@ -371,6 +371,9 @@ def risk_meta(dp):
 
 
 # ── Sidebar Navigation ─────────────────────────────────────────────────────────
+if "nav_page" not in st.session_state:
+    st.session_state["nav_page"] = "Overview"
+
 with st.sidebar:
     st.markdown("""
     <div class="brand-bar">
@@ -382,6 +385,7 @@ with st.sidebar:
     page = st.radio(
         "Navigation",
         ["Overview", "Risk Evaluator", "Model Analytics"],
+        key="nav_page",
         label_visibility="collapsed",
     )
     st.markdown("---")
@@ -412,11 +416,11 @@ if page == "Overview":
     bc1, bc2, bc3 = st.columns([2, 2, 6])
     with bc1:
         if st.button("⚡ Launch Risk Evaluator →", use_container_width=True):
-            st.session_state["_nav"] = "Risk Evaluator"
+            st.session_state["nav_page"] = "Risk Evaluator"
             st.rerun()
     with bc2:
         if st.button("📊 Explore Analytics", use_container_width=True):
-            st.session_state["_nav"] = "Model Analytics"
+            st.session_state["nav_page"] = "Model Analytics"
             st.rerun()
 
     # Stats grid
@@ -772,7 +776,4 @@ elif page == "Model Analytics":
 
 
 
-# ── Handle nav from buttons ────────────────────────────────────────────────────
-if "_nav" in st.session_state:
-    # Can't change radio from code in older streamlit; user sees message
-    del st.session_state["_nav"]
+
