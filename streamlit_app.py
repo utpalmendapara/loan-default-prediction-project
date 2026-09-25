@@ -381,7 +381,7 @@ with st.sidebar:
 
     page = st.radio(
         "Navigation",
-        ["Overview", "Risk Evaluator", "Model Analytics", "Architecture"],
+        ["Overview", "Risk Evaluator", "Model Analytics"],
         label_visibility="collapsed",
     )
     st.markdown("---")
@@ -770,53 +770,7 @@ elif page == "Model Analytics":
                 st.info(f"📊 Visualization not found: {fname}")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# PAGE 4 — ARCHITECTURE  (matches Flask about.html)
-# ══════════════════════════════════════════════════════════════════════════════
-elif page == "Architecture":
-    st.markdown('<div class="hero-badge">System Architecture & ML Lifecycle</div>', unsafe_allow_html=True)
-    st.markdown("## Credit Risk Underwriting Engineering Pipeline")
-    st.markdown('<p style="color:#64748b">A systematic, production-grade machine learning implementation for Loan Default Prediction.</p>', unsafe_allow_html=True)
 
-    PHASES = [
-        ("Phase 01", "Problem Definition & Exploration",
-         "Problem formulation, business context, ingestion of 255,347 loan applications, data dictionary, class imbalance analysis (~88.4% non-default, ~11.6% default)."),
-        ("Phase 02", "Data Cleaning & Preprocessing",
-         "Zero missing values verified, IQR/Z-score outlier detection and winsorization, binary label encoding, one-hot dummy encoding, and StandardScaler normalizations."),
-        ("Phase 03", "Model Creation (Library & Scratch)",
-         "Justification of tree-based models on tabular financial data. Scikit-learn Decision Tree baseline + custom pure Python/NumPy Decision Tree built from first principles."),
-        ("Phase 04", "Model Evaluation & Diagnostics",
-         "Precision, Recall, F1, ROC-AUC, Specificity, Confusion Matrix analysis. Tree depth sweep diagnosing high bias (underfitting) vs high variance (overfitting)."),
-        ("Phase 05", "Advanced Models & Hyperparameter Tuning",
-         "Random Forest, Gradient Boosting, 5-Fold Stratified Cross-Validation, GridSearchCV tuning of hyperparameters (n_estimators, max_depth, min_samples_split)."),
-        ("Phase 06", "Visualization of Metrics",
-         "Display of 7 distinct evaluation graph types: ROC curves, PR curves, Confusion Matrix heatmaps, Feature Importances, Learning curves, Calibration, and CV boxplots."),
-        ("Phase 07", "Application Backend Architecture",
-         "Modular application architecture with dynamic configuration management, routes, and robust form validation."),
-        ("Phase 08", "Frontend User Experience",
-         "Glassmorphic, responsive user interface with 16 input parameters, quick preset profiles (Low/Med/High risk), and visual risk gauge rendering."),
-        ("Phase 09", "Backend APIs & Containerization",
-         "REST API endpoints, Docker containerization, production configs, and scalable cloud deployment blueprints."),
-        ("Phase 10", "Financial Impact & Optimization",
-         "Comprehensive model assessment: financial cost matrix, decision threshold tuning, error analysis, and production roadmap."),
-    ]
-
-    phases_html = "".join(f"""
-    <div class="roadmap-item">
-        <div class="step-num">{num}</div>
-        <h3>{title}</h3>
-        <p>{desc}</p>
-    </div>
-    """ for num, title, desc in PHASES)
-
-    st.markdown(f'<div class="roadmap-grid">{phases_html}</div>', unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="footer-bar">
-        <p><strong>CrediPulse AI</strong> — Credit Risk Underwriting Intelligence</p>
-        <p>Enterprise Machine Learning Platform for Real-Time Credit Risk Assessment</p>
-    </div>
-    """, unsafe_allow_html=True)
 
 # ── Handle nav from buttons ────────────────────────────────────────────────────
 if "_nav" in st.session_state:
