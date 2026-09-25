@@ -374,6 +374,9 @@ def risk_meta(dp):
 if "nav_page" not in st.session_state:
     st.session_state["nav_page"] = "Overview"
 
+def set_nav_page(target_page: str):
+    st.session_state["nav_page"] = target_page
+
 with st.sidebar:
     st.markdown("""
     <div class="brand-bar">
@@ -415,13 +418,9 @@ if page == "Overview":
     # CTA buttons
     bc1, bc2, bc3 = st.columns([2, 2, 6])
     with bc1:
-        if st.button("⚡ Launch Risk Evaluator →", use_container_width=True):
-            st.session_state["nav_page"] = "Risk Evaluator"
-            st.rerun()
+        st.button("⚡ Launch Risk Evaluator →", use_container_width=True, on_click=set_nav_page, args=("Risk Evaluator",))
     with bc2:
-        if st.button("📊 Explore Analytics", use_container_width=True):
-            st.session_state["nav_page"] = "Model Analytics"
-            st.rerun()
+        st.button("📊 Explore Analytics", use_container_width=True, on_click=set_nav_page, args=("Model Analytics",))
 
     # Stats grid
     st.markdown("""
