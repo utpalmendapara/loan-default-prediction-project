@@ -801,7 +801,8 @@ Applicant: Age ${formData.Age}, Income $${formData.Income}, Loan Amount $${formD
               <span>🖨️ Print / Save Summary</span>
             </button>
           </div>
-        </div>
+        </div>`
+        `
       )}
     </div>
   );
