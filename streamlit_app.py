@@ -765,7 +765,7 @@ elif page == "Model Analytics":
             </div>
             """, unsafe_allow_html=True)
             if img_path.exists():
-                st.image(str(img_path), use_column_width=True)
+                st.image(str(img_path), use_container_width=True)
             else:
                 st.info(f"📊 Visualization not found: {fname}")
 
