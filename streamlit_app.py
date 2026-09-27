@@ -1,5 +1,5 @@
 """
-streamlit_app.py  —  CrediPulse AI
+streamlit_app.py  —  LoanRisk AI
 ====================================
 Exact Streamlit replica of the Flask app (run_flask.py).
 Pages: Overview · Dataset · Risk Evaluator · Model Analytics
@@ -16,10 +16,10 @@ if str(ROOT) not in sys.path:
 import streamlit as st
 
 st.set_page_config(
-    page_title="CrediPulse AI — Loan Default Prediction",
+    page_title="LoanRisk AI — Loan Default Prediction",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 import joblib
@@ -65,12 +65,39 @@ html, body, [class*="css"] {
     color: #e2e8f0;
 }
 
-/* ── Sidebar ── */
-[data-testid="stSidebar"] {
-    background: #0d0d1f !important;
-    border-right: 1px solid rgba(255,255,255,0.07);
+/* ── Hide Sidebar & Toggle Control for Full Top Navbar Experience ── */
+[data-testid="stSidebar"],
+[data-testid="collapsedControl"],
+section[data-testid="stSidebar"] {
+    display: none !important;
 }
-[data-testid="stSidebar"] * { color: #e2e8f0 !important; }
+
+/* ── Top Responsive Navbar Button Styles ── */
+div[data-testid="stHorizontalBlock"] .stButton > button[kind="secondary"] {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.09) !important;
+    color: #94a3b8 !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    transition: all 0.25s ease !important;
+}
+
+div[data-testid="stHorizontalBlock"] .stButton > button[kind="secondary"]:hover {
+    background: rgba(255, 255, 255, 0.09) !important;
+    color: #ffffff !important;
+    border-color: rgba(129, 140, 248, 0.4) !important;
+    transform: translateY(-1px) !important;
+}
+
+div[data-testid="stHorizontalBlock"] .stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border: 1px solid rgba(129, 140, 248, 0.6) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4) !important;
+    transform: translateY(-1px) !important;
+}
 
 /* ── Top brand bar ── */
 .brand-bar {
@@ -378,33 +405,53 @@ def risk_meta(dp):
                "#10b981"
 
 
-# ── Sidebar Navigation ─────────────────────────────────────────────────────────
+# ── Top Responsive Navigation Bar ──────────────────────────────────────────────
 if "nav_page" not in st.session_state:
     st.session_state["nav_page"] = "Overview"
 
 def set_nav_page(target_page: str):
     st.session_state["nav_page"] = target_page
 
-with st.sidebar:
+# Responsive Top Header with Brand & Navigation Pills
+nav_brand_col, nav_btn1, nav_btn2, nav_btn3, nav_btn4 = st.columns([2.8, 1.2, 1.1, 1.5, 1.5], gap="small")
+
+with nav_brand_col:
     st.markdown("""
-    <div class="brand-bar">
-        <span class="icon">🛡️</span>
-        <span class="name">CrediPulse <span>AI</span></span>
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 0 0 0;">
+        <span style="font-size: 1.6rem;">🛡️</span>
+        <span style="font-family: 'Space Grotesk', sans-serif; font-size: 1.35rem; font-weight: 800; color: #fff;">
+            LoanRisk <span style="color: #818cf8;">AI</span>
+        </span>
     </div>
     """, unsafe_allow_html=True)
 
-    page = st.radio(
-        "Navigation",
-        ["Overview", "Dataset", "Risk Evaluator", "Model Analytics"],
-        key="nav_page",
-        label_visibility="collapsed",
-    )
-    st.markdown("---")
-    st.markdown(
-        "<small style='color:#475569'>Enterprise Credit Risk Underwriting Intelligence<br>"
-        "ML Platform for Real-Time Credit Assessment</small>",
-        unsafe_allow_html=True,
-    )
+with nav_btn1:
+    if st.button("🏠 Overview", key="top_nav_overview", use_container_width=True,
+                 type="primary" if st.session_state["nav_page"] == "Overview" else "secondary"):
+        set_nav_page("Overview")
+        st.rerun()
+
+with nav_btn2:
+    if st.button("📁 Dataset", key="top_nav_dataset", use_container_width=True,
+                 type="primary" if st.session_state["nav_page"] == "Dataset" else "secondary"):
+        set_nav_page("Dataset")
+        st.rerun()
+
+with nav_btn3:
+    if st.button("⚡ Risk Evaluator", key="top_nav_evaluator", use_container_width=True,
+                 type="primary" if st.session_state["nav_page"] == "Risk Evaluator" else "secondary"):
+        set_nav_page("Risk Evaluator")
+        st.rerun()
+
+with nav_btn4:
+    if st.button("📊 Model Analytics", key="top_nav_analytics", use_container_width=True,
+                 type="primary" if st.session_state["nav_page"] == "Model Analytics" else "secondary"):
+        set_nav_page("Model Analytics")
+        st.rerun()
+
+st.markdown("<div style='margin-top: 4px; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08);'></div>", unsafe_allow_html=True)
+
+page = st.session_state["nav_page"]
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -495,7 +542,7 @@ if page == "Overview":
 
     st.markdown("""
     <div class="footer-bar">
-        <p><strong>CrediPulse AI</strong> — Credit Risk Underwriting Intelligence</p>
+        <p><strong>LoanRisk AI</strong> — Credit Risk Underwriting Intelligence</p>
         <p>Enterprise Machine Learning Platform for Real-Time Credit Risk Assessment</p>
     </div>
     """, unsafe_allow_html=True)
