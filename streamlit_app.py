@@ -2,7 +2,7 @@
 streamlit_app.py  —  LoanRisk AI
 ====================================
 Exact Streamlit replica of the Flask app (run_flask.py).
-Pages: Overview · Dataset · Risk Evaluator · Model Analytics
+Pages: Overview · Dataset · Risk Evaluator · Model Analytics · About
 """
 
 import sys
@@ -413,7 +413,7 @@ def set_nav_page(target_page: str):
     st.session_state["nav_page"] = target_page
 
 # Responsive Top Header with Brand & Navigation Pills
-nav_brand_col, nav_btn1, nav_btn2, nav_btn3, nav_btn4 = st.columns([2.8, 1.2, 1.1, 1.5, 1.5], gap="small")
+nav_brand_col, nav_btn1, nav_btn2, nav_btn3, nav_btn4, nav_btn5 = st.columns([2.2, 1.0, 0.9, 1.3, 1.4, 0.9], gap="small")
 
 with nav_brand_col:
     st.markdown("""
@@ -447,6 +447,12 @@ with nav_btn4:
     if st.button("📊 Model Analytics", key="top_nav_analytics", use_container_width=True,
                  type="primary" if st.session_state["nav_page"] == "Model Analytics" else "secondary"):
         set_nav_page("Model Analytics")
+        st.rerun()
+
+with nav_btn5:
+    if st.button("ℹ️ About", key="top_nav_about", use_container_width=True,
+                 type="primary" if st.session_state["nav_page"] == "About" else "secondary"):
+        set_nav_page("About")
         st.rerun()
 
 st.markdown("<div style='margin-top: 4px; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08);'></div>", unsafe_allow_html=True)
@@ -849,4 +855,169 @@ elif page == "Model Analytics":
       </tbody>
     </table>
     <br>
+    """, unsafe_allow_html=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 5 — ABOUT PROJECT (Full Methodology & System Architecture)
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "About":
+    st.markdown('<div class="hero-badge">System Architecture & ML Lifecycle</div>', unsafe_allow_html=True)
+    st.markdown('<h1 class="hero-title" style="font-size: 2.3rem; margin-bottom: 8px;">About LoanRisk AI</h1>', unsafe_allow_html=True)
+    st.markdown("""
+    <p style="color:#94a3b8; font-size: 1.05rem; line-height: 1.7; max-width: 820px; margin-bottom: 30px;">
+        <strong>LoanRisk AI</strong> is an enterprise-grade Credit Risk Underwriting Intelligence Platform 
+        developed across 255,347 retail loan applications. The system bridges pure mathematical machine learning 
+        algorithms (built from scratch in NumPy) with production-ready ensemble models and real-time interactive decision tools.
+    </p>
+    """, unsafe_allow_html=True)
+
+    # ── Core System Highlights ─────────────────────────────────────────────────
+    st.markdown("""
+    <div class="cards-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 36px;">
+        <div class="feature-card">
+            <div class="card-icon">🧠</div>
+            <h3>Pure NumPy Algorithm</h3>
+            <p>Custom Decision Tree built purely in Python and NumPy from mathematical first principles without ML libraries.</p>
+        </div>
+        <div class="feature-card">
+            <div class="card-icon">📊</div>
+            <h3>255k+ Loan Records</h3>
+            <p>Trained and validated on 255,347 historical retail applications across 18 borrower and loan attributes.</p>
+        </div>
+        <div class="feature-card">
+            <div class="card-icon">⚡</div>
+            <h3>&lt; 15ms Inference</h3>
+            <p>High-throughput real-time underwriting scoring with calibrated probabilities and automated recommendations.</p>
+        </div>
+        <div class="feature-card">
+            <div class="card-icon">🛡️</div>
+            <h3>Cost-Sensitive Tuning</h3>
+            <p>10:1 asymmetric loss matrix tuning that reduces catastrophic loan portfolio default losses by ~34%.</p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── 10-Phase Engineering Roadmap ──────────────────────────────────────────
+    st.markdown('<h2 class="section-title" style="font-size: 1.6rem; margin-bottom: 6px;">10-Phase Engineering Methodology</h2>', unsafe_allow_html=True)
+    st.markdown('<p class="section-sub">Standard Operating Procedure (SOP) Machine Learning Engineering Lifecycle</p>', unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 40px;">
+        <div class="roadmap-item">
+            <div class="step-num">Phase 01</div>
+            <h3>Problem Definition & Ingestion</h3>
+            <p>Formal mathematical formulation y ∈ {0, 1}, business risk context, and exploratory ingestion of 255,347 records with 88.4% non-default vs 11.6% default class distribution.</p>
+        </div>
+        <div class="roadmap-item">
+            <div class="step-num">Phase 02</div>
+            <h3>Data Cleaning & Preprocessing</h3>
+            <p>Missing value verification, IQR outlier detection on continuous variables, binary indicator encoding, one-hot dummy transformations (28 model features), and StandardScaler scaling.</p>
+        </div>
+        <div class="roadmap-item">
+            <div class="step-num">Phase 03</div>
+            <h3>Model Creation (Library & From Scratch)</h3>
+            <p>Implementation of Scikit-Learn baseline classifiers alongside an independent <strong>pure NumPy Decision Tree Classifier built from first principles</strong> using recursive Gini impurity splits.</p>
+        </div>
+        <div class="roadmap-item">
+            <div class="step-num">Phase 04</div>
+            <h3>Model Diagnostics & Overfitting Sweeps</h3>
+            <p>Evaluation of Precision, Recall, F1, and ROC-AUC. Systematic depth sweep (depth 1 to 16) diagnosing high bias (underfitting) vs high variance (overfitting) to isolate max_depth=7.</p>
+        </div>
+        <div class="roadmap-item">
+            <div class="step-num">Phase 05</div>
+            <h3>Advanced Ensembles & Cross-Validation</h3>
+            <p>Random Forest and Gradient Boosting architectures with 5-Fold Stratified Cross-Validation ensuring model stability, accompanied by GridSearchCV hyperparameter tuning.</p>
+        </div>
+        <div class="roadmap-item">
+            <div class="step-num">Phase 06</div>
+            <h3>Empirical Metrics & Visualizations</h3>
+            <p>Generation of comprehensive validation artifacts including ROC curves (0.736 AUC), PR curves, Confusion Matrices, Feature Importance rankings, and Calibration curves.</p>
+        </div>
+        <div class="roadmap-item">
+            <div class="step-num">Phase 07</div>
+            <h3>Application Backend Architecture</h3>
+            <p>Modular application architecture with dynamic configuration management, REST API endpoints, and robust 16-parameter form validation.</p>
+        </div>
+        <div class="roadmap-item">
+            <div class="step-num">Phase 08</div>
+            <h3>Interactive Frontend Experience</h3>
+            <p>Modern glassmorphic interface with interactive parameter controls, one-click Low/Med/High risk borrower test presets, and real-time visual risk probability gauges.</p>
+        </div>
+        <div class="roadmap-item">
+            <div class="step-num">Phase 09</div>
+            <h3>Production Containerization & Cloud CI/CD</h3>
+            <p>Docker containerization, automated testing suite (HTTP 200 verification), and production deployment configs for Render and Streamlit Cloud.</p>
+        </div>
+        <div class="roadmap-item">
+            <div class="step-num">Phase 10</div>
+            <h3>Financial Impact & Optimization</h3>
+            <p>Cost-sensitive risk matrix analysis balancing False Negatives (unrecovered principal) vs False Positives (lost interest), establishing optimal decision threshold τ = 0.25.</p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Mathematical Spotlight: From-Scratch Algorithm ────────────────────────
+    st.markdown('<h2 class="section-title" style="font-size: 1.6rem; margin-bottom: 6px;">Algorithmic Deep Dive: Pure NumPy Decision Tree</h2>', unsafe_allow_html=True)
+    st.markdown('<p class="section-sub">Zero-dependency implementation engineered purely in Python and NumPy</p>', unsafe_allow_html=True)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("""
+        <div class="feature-card" style="height: 100%;">
+            <h3 style="color:#818cf8;">1. Gini Impurity Metric</h3>
+            <p style="color:#cbd5e1; line-height: 1.8;">
+                The mathematical impurity of sample partition <em>S</em> containing class probabilities <em>p<sub>k</sub></em>:
+                <br><br>
+                <code style="background:rgba(255,255,255,0.08); padding:4px 10px; border-radius:6px; color:#a5b4fc;">
+                    Gini(S) = 1 - &sum; p<sub>k</sub>&sup2;
+                </code>
+                <br><br>
+                Evaluated across continuous feature quantile split points &theta; to maximize Information Gain.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with c2:
+        st.markdown("""
+        <div class="feature-card" style="height: 100%;">
+            <h3 style="color:#818cf8;">2. Empirical Verification</h3>
+            <p style="color:#cbd5e1; line-height: 1.8;">
+                • <strong>88.85% Test Accuracy</strong> achieved on hold-out testing set.<br>
+                • <strong>&gt;95% Concordance</strong> with Scikit-Learn's Decision Tree baseline.<br>
+                • Fully vectorized NumPy operations enabling efficient recursive tree traversal.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ── Technology Stack ───────────────────────────────────────────────────────
+    st.markdown('<h2 class="section-title" style="font-size: 1.6rem; margin-top: 36px; margin-bottom: 6px;">Technology Stack & Tooling</h2>', unsafe_allow_html=True)
+    st.markdown('<p class="section-sub">Production technologies powering the LoanRisk AI platform</p>', unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 30px;">
+        <div class="summary-item">
+            <div class="item-label">Core & Data</div>
+            <div class="item-value">Python 3.10+ · NumPy · Pandas</div>
+        </div>
+        <div class="summary-item">
+            <div class="item-label">Machine Learning</div>
+            <div class="item-value">Scikit-Learn · Joblib · Custom NumPy</div>
+        </div>
+        <div class="summary-item">
+            <div class="item-label">Web & Framework</div>
+            <div class="item-value">Streamlit · Flask · Glassmorphism CSS</div>
+        </div>
+        <div class="summary-item">
+            <div class="item-label">DevOps & Cloud</div>
+            <div class="item-value">Docker · Git · Render · Streamlit Cloud</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="footer-bar">
+        <p><strong>LoanRisk AI</strong> — Credit Risk Underwriting Intelligence</p>
+        <p>Enterprise Machine Learning Platform for Real-Time Credit Risk Assessment</p>
+    </div>
     """, unsafe_allow_html=True)
