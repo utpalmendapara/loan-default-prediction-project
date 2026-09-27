@@ -72,6 +72,26 @@ section[data-testid="stSidebar"] {
     display: none !important;
 }
 
+/* ── Hide Streamlit Default Top Header, Fork Button, GitHub Icon & Menu ── */
+#MainMenu,
+header[data-testid="stHeader"],
+footer,
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+[data-testid="stStatusWidget"],
+.viewerBadge_container__1QSob,
+.stDeployButton {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0px !important;
+}
+
+/* Adjust top padding so top navbar aligns cleanly at the top */
+.block-container {
+    padding-top: 1.5rem !important;
+    padding-bottom: 2rem !important;
+}
+
 /* ── Top Responsive Navbar Button Styles ── */
 div[data-testid="stHorizontalBlock"] .stButton > button[kind="secondary"] {
     background: rgba(255, 255, 255, 0.04) !important;
