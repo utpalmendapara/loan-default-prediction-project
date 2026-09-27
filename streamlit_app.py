@@ -1,5 +1,5 @@
 """
-streamlit_app.py  —  LoanRisk AI
+streamlit_app.py  —  LoanGuard AI
 ====================================
 Exact Streamlit replica of the Flask app (run_flask.py).
 Pages: Overview · Dataset · Risk Evaluator · Model Analytics · About
@@ -16,7 +16,7 @@ if str(ROOT) not in sys.path:
 import streamlit as st
 
 st.set_page_config(
-    page_title="LoanRisk AI — Loan Default Prediction",
+    page_title="LoanGuard AI — Loan Default Prediction",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -420,7 +420,7 @@ with nav_brand_col:
     <div style="display: flex; align-items: center; gap: 10px; padding: 4px 0 0 0;">
         <span style="font-size: 1.6rem;">🛡️</span>
         <span style="font-family: 'Space Grotesk', sans-serif; font-size: 1.35rem; font-weight: 800; color: #fff;">
-            LoanRisk <span style="color: #818cf8;">AI</span>
+            LoanGuard <span style="color: #818cf8;">AI</span>
         </span>
     </div>
     """, unsafe_allow_html=True)
@@ -548,7 +548,7 @@ if page == "Overview":
 
     st.markdown("""
     <div class="footer-bar">
-        <p><strong>LoanRisk AI</strong> — Credit Risk Underwriting Intelligence</p>
+        <p><strong>LoanGuard AI</strong> — Credit Risk Underwriting Intelligence</p>
         <p>Enterprise Machine Learning Platform for Real-Time Credit Risk Assessment</p>
     </div>
     """, unsafe_allow_html=True)
@@ -863,10 +863,10 @@ elif page == "Model Analytics":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "About":
     st.markdown('<div class="hero-badge">System Architecture & ML Lifecycle</div>', unsafe_allow_html=True)
-    st.markdown('<h1 class="hero-title" style="font-size: 2.3rem; margin-bottom: 8px;">About LoanRisk AI</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="hero-title" style="font-size: 2.3rem; margin-bottom: 8px;">About LoanGuard AI</h1>', unsafe_allow_html=True)
     st.markdown("""
     <p style="color:#94a3b8; font-size: 1.05rem; line-height: 1.7; max-width: 820px; margin-bottom: 30px;">
-        <strong>LoanRisk AI</strong> is an enterprise-grade Credit Risk Underwriting Intelligence Platform 
+        <strong>LoanGuard AI</strong> is an enterprise-grade Credit Risk Underwriting Intelligence Platform 
         developed across 255,347 retail loan applications. The system bridges pure mathematical machine learning 
         algorithms (built from scratch in NumPy) with production-ready ensemble models and real-time interactive decision tools.
     </p>
@@ -992,7 +992,7 @@ elif page == "About":
 
     # ── Technology Stack ───────────────────────────────────────────────────────
     st.markdown('<h2 class="section-title" style="font-size: 1.6rem; margin-top: 36px; margin-bottom: 6px;">Technology Stack & Tooling</h2>', unsafe_allow_html=True)
-    st.markdown('<p class="section-sub">Production technologies powering the LoanRisk AI platform</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-sub">Production technologies powering the LoanGuard AI platform</p>', unsafe_allow_html=True)
 
     st.markdown("""
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 30px;">
@@ -1017,7 +1017,7 @@ elif page == "About":
 
     st.markdown("""
     <div class="footer-bar">
-        <p><strong>LoanRisk AI</strong> — Credit Risk Underwriting Intelligence</p>
+        <p><strong>LoanGuard AI</strong> — Credit Risk Underwriting Intelligence</p>
         <p>Enterprise Machine Learning Platform for Real-Time Credit Risk Assessment</p>
     </div>
     """, unsafe_allow_html=True)
