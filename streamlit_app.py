@@ -2,7 +2,7 @@
 streamlit_app.py  —  CrediPulse AI
 ====================================
 Exact Streamlit replica of the Flask app (run_flask.py).
-Pages: Overview · Risk Evaluator · Model Analytics · Architecture
+Pages: Overview · Dataset · Risk Evaluator · Model Analytics
 """
 
 import sys
@@ -29,6 +29,7 @@ import pandas as pd
 # ── Paths ──────────────────────────────────────────────────────────────────────
 MODELS_DIR = ROOT / "notebooks-containing-models"
 VIZ_DIR    = ROOT / "flask_app" / "static" / "visualizations"
+DATA_FILE  = ROOT / "data" / "Loan_default.csv"
 
 AVAILABLE_MODELS = {
     "Decision Tree (Depth 8) — Default":  "DecisionTreeModel.pkl",
@@ -309,6 +310,13 @@ def load_model(filename: str):
     return joblib.load(p) if p.exists() else None
 
 
+@st.cache_data(show_spinner="Loading dataset…")
+def load_dataset():
+    if DATA_FILE.exists():
+        return pd.read_csv(DATA_FILE)
+    return None
+
+
 def build_features(f: dict) -> pd.DataFrame:
     yes = lambda k: 1 if str(f.get(k, "No")).strip().lower() in ["yes","1","true"] else 0
     edu  = f.get("Education",      "Bachelor's")
@@ -387,7 +395,7 @@ with st.sidebar:
 
     page = st.radio(
         "Navigation",
-        ["Overview", "Risk Evaluator", "Model Analytics"],
+        ["Overview", "Dataset", "Risk Evaluator", "Model Analytics"],
         key="nav_page",
         label_visibility="collapsed",
     )
@@ -416,11 +424,13 @@ if page == "Overview":
     """, unsafe_allow_html=True)
 
     # CTA buttons
-    bc1, bc2, bc3 = st.columns([2, 2, 6])
+    bc1, bc2, bc3 = st.columns([2, 2, 2])
     with bc1:
-        st.button("⚡ Launch Risk Evaluator →", use_container_width=True, on_click=set_nav_page, args=("Risk Evaluator",))
+        st.button("⚡ Risk Evaluator →", use_container_width=True, on_click=set_nav_page, args=("Risk Evaluator",))
     with bc2:
-        st.button("📊 Explore Analytics", use_container_width=True, on_click=set_nav_page, args=("Model Analytics",))
+        st.button("📁 View Dataset", use_container_width=True, on_click=set_nav_page, args=("Dataset",))
+    with bc3:
+        st.button("📊 Model Analytics", use_container_width=True, on_click=set_nav_page, args=("Model Analytics",))
 
     # Stats grid
     st.markdown("""
@@ -492,7 +502,62 @@ if page == "Overview":
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PAGE 2 — RISK EVALUATOR  (matches Flask predict.html + result.html)
+# PAGE 2 — DATASET OVERVIEW
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "Dataset":
+    st.markdown('<div class="hero-badge">Source Data & Statistical Profile</div>', unsafe_allow_html=True)
+    st.markdown('<h1 class="hero-title" style="font-size: 2.3rem; margin-bottom: 6px;">Dataset overview</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#94a3b8; font-size: 1.05rem; margin-bottom: 24px;">Local copy of the source dataset used for this application.</p>', unsafe_allow_html=True)
+
+    df_data = load_dataset()
+
+    if df_data is None:
+        st.error("❌ Dataset file not found at `data/Loan_default.csv`.")
+    else:
+        total_rows = len(df_data)
+        total_cols = len(df_data.columns)
+
+        # ── Stat Cards ─────────────────────────────────────────────────────────
+        st.markdown(f"""
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0 32px 0;">
+            <div class="stat-card" style="text-align: left; padding: 22px 26px;">
+                <div class="stat-label" style="margin-bottom: 8px; font-size: 0.85rem; color: #94a3b8;">Rows</div>
+                <div class="stat-number" style="font-size: 2.3rem;">{total_rows:,}</div>
+            </div>
+            <div class="stat-card" style="text-align: left; padding: 22px 26px;">
+                <div class="stat-label" style="margin-bottom: 8px; font-size: 0.85rem; color: #94a3b8;">Columns</div>
+                <div class="stat-number" style="font-size: 2.3rem;">{total_cols}</div>
+            </div>
+            <div class="stat-card" style="text-align: left; padding: 22px 26px;">
+                <div class="stat-label" style="margin-bottom: 8px; font-size: 0.85rem; color: #94a3b8;">Dataset target column</div>
+                <div class="stat-number" style="font-size: 2.3rem;">Default</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ── Section 1: Preview ────────────────────────────────────────────────
+        st.markdown('<h2 class="section-title" style="font-size: 1.5rem; margin-top: 8px; margin-bottom: 14px;">Preview</h2>', unsafe_allow_html=True)
+        st.dataframe(df_data.head(15), use_container_width=True, height=380)
+
+        # ── Section 2: Numeric Summary ────────────────────────────────────────
+        st.markdown('<h2 class="section-title" style="font-size: 1.5rem; margin-top: 36px; margin-bottom: 14px;">Numeric summary</h2>', unsafe_allow_html=True)
+        num_cols = df_data.select_dtypes(include=[np.number]).columns
+        desc_df = df_data[num_cols].describe().T
+        st.dataframe(desc_df, use_container_width=True)
+
+        # ── Section 3: Dataset Information ────────────────────────────────────
+        st.markdown('<h2 class="section-title" style="font-size: 1.5rem; margin-top: 36px; margin-bottom: 14px;">Dataset information</h2>', unsafe_allow_html=True)
+        info_df = pd.DataFrame({
+            "Column": df_data.columns,
+            "Data Type": ["str" if t == "object" else str(t) for t in df_data.dtypes],
+            "Missing Values": df_data.isnull().sum().values,
+            "Unique Values": [df_data[col].nunique() for col in df_data.columns],
+        })
+        st.dataframe(info_df, use_container_width=True, height=450)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 3 — RISK EVALUATOR  (matches Flask predict.html + result.html)
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "Risk Evaluator":
     st.markdown('<div class="hero-badge">Real-Time Risk Scoring Engine</div>', unsafe_allow_html=True)
